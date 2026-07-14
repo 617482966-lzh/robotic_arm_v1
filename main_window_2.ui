@@ -65,7 +65,7 @@
         <property name="title">
          <string>连接</string>
         </property>
-        <widget class="QWidget" name="">
+        <widget class="QWidget" name="layoutWidget">
          <property name="geometry">
           <rect>
            <x>11</x>
@@ -130,7 +130,7 @@
           </item>
          </layout>
         </widget>
-        <widget class="QWidget" name="">
+        <widget class="QWidget" name="layoutWidget">
          <property name="geometry">
           <rect>
            <x>11</x>
@@ -363,69 +363,6 @@
           </item>
          </layout>
         </widget>
-        <widget class="QWidget" name="layoutWidget_10">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>170</y>
-           <width>151</width>
-           <height>30</height>
-          </rect>
-         </property>
-         <layout class="QHBoxLayout" name="poseRow_X_global">
-          <item>
-           <widget class="QLabel" name="poseLabel_X_7">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>X</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QDoubleSpinBox" name="robotTargetX_global">
-            <property name="minimumSize">
-             <size>
-              <width>70</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="decimals">
-             <number>3</number>
-            </property>
-            <property name="minimum">
-             <double>-999.999000000000024</double>
-            </property>
-            <property name="maximum">
-             <double>999.999000000000024</double>
-            </property>
-            <property name="value">
-             <double>0.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QLabel" name="poseUnit_X_3">
-            <property name="minimumSize">
-             <size>
-              <width>24</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>mm</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
         <widget class="QWidget" name="layoutWidget_11">
          <property name="geometry">
           <rect>
@@ -621,7 +558,7 @@
            <x>10</x>
            <y>232</y>
            <width>375</width>
-           <height>24</height>
+           <height>27</height>
           </rect>
          </property>
          <layout class="QHBoxLayout" name="speedRow_global">
@@ -646,11 +583,20 @@
             <property name="maximum">
              <number>100</number>
             </property>
+            <property name="pageStep">
+             <number>5</number>
+            </property>
             <property name="value">
              <number>5</number>
             </property>
             <property name="orientation">
              <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="tickPosition">
+             <enum>QSlider::TickPosition::TicksBelow</enum>
+            </property>
+            <property name="tickInterval">
+             <number>10</number>
             </property>
            </widget>
           </item>
@@ -1108,7 +1054,7 @@
            <x>10</x>
            <y>130</y>
            <width>375</width>
-           <height>24</height>
+           <height>27</height>
           </rect>
          </property>
          <layout class="QHBoxLayout" name="speedRow_zengliang">
@@ -1133,11 +1079,20 @@
             <property name="maximum">
              <number>100</number>
             </property>
+            <property name="pageStep">
+             <number>5</number>
+            </property>
             <property name="value">
              <number>5</number>
             </property>
             <property name="orientation">
              <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="tickPosition">
+             <enum>QSlider::TickPosition::TicksBelow</enum>
+            </property>
+            <property name="tickInterval">
+             <number>10</number>
             </property>
            </widget>
           </item>
@@ -1346,6 +1301,69 @@
             </property>
             <property name="text">
              <string>deg</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="">
+         <property name="geometry">
+          <rect>
+           <x>31</x>
+           <y>171</y>
+           <width>131</width>
+           <height>27</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QLabel" name="poseLabel_X_7">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>X</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="robotTargetX_global">
+            <property name="minimumSize">
+             <size>
+              <width>70</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-999.999000000000024</double>
+            </property>
+            <property name="maximum">
+             <double>999.999000000000024</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseUnit_X_3">
+            <property name="minimumSize">
+             <size>
+              <width>24</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>mm</string>
             </property>
            </widget>
           </item>
@@ -1743,7 +1761,10 @@
               <number>1</number>
              </property>
              <property name="maximum">
-              <number>100</number>
+              <number>10</number>
+             </property>
+             <property name="pageStep">
+              <number>1</number>
              </property>
              <property name="value">
               <number>5</number>
@@ -1751,10 +1772,16 @@
              <property name="orientation">
               <enum>Qt::Orientation::Horizontal</enum>
              </property>
+             <property name="tickPosition">
+              <enum>QSlider::TickPosition::TicksBelow</enum>
+             </property>
+             <property name="tickInterval">
+              <number>1</number>
+             </property>
             </widget>
            </item>
            <item>
-           <widget class="QSpinBox" name="robotJointSpeedSpin_zengliang">
+            <widget class="QSpinBox" name="robotJointSpeedSpin_zengliang">
              <property name="minimum">
               <number>1</number>
              </property>
@@ -2006,7 +2033,10 @@
               <number>1</number>
              </property>
              <property name="maximum">
-              <number>100</number>
+              <number>10</number>
+             </property>
+             <property name="pageStep">
+              <number>1</number>
              </property>
              <property name="value">
               <number>5</number>
@@ -2014,10 +2044,16 @@
              <property name="orientation">
               <enum>Qt::Orientation::Horizontal</enum>
              </property>
+             <property name="tickPosition">
+              <enum>QSlider::TickPosition::TicksBelow</enum>
+             </property>
+             <property name="tickInterval">
+              <number>1</number>
+             </property>
             </widget>
            </item>
            <item>
-           <widget class="QSpinBox" name="robotJointSpeedSpin_global">
+            <widget class="QSpinBox" name="robotJointSpeedSpin_global">
              <property name="minimum">
               <number>1</number>
              </property>
@@ -2180,19 +2216,6 @@
              </property>
             </widget>
            </item>
-           <item>
-            <spacer name="hSpacerMem_1">
-             <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>0</width>
-               <height>0</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
           </layout>
          </item>
          <item>
@@ -2264,19 +2287,6 @@
               <string>清除</string>
              </property>
             </widget>
-           </item>
-           <item>
-            <spacer name="hSpacerMem_2">
-             <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>0</width>
-               <height>0</height>
-              </size>
-             </property>
-            </spacer>
            </item>
           </layout>
          </item>
@@ -2350,19 +2360,6 @@
              </property>
             </widget>
            </item>
-           <item>
-            <spacer name="hSpacerMem_3">
-             <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>0</width>
-               <height>0</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
           </layout>
          </item>
          <item>
@@ -2435,19 +2432,6 @@
              </property>
             </widget>
            </item>
-           <item>
-            <spacer name="hSpacerMem_4">
-             <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>0</width>
-               <height>0</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
           </layout>
          </item>
          <item>
@@ -2519,19 +2503,6 @@
               <string>清除</string>
              </property>
             </widget>
-           </item>
-           <item>
-            <spacer name="hSpacerMem_5">
-             <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>0</width>
-               <height>0</height>
-              </size>
-             </property>
-            </spacer>
            </item>
           </layout>
          </item>
