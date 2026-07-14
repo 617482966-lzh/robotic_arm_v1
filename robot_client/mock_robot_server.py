@@ -188,7 +188,8 @@ class MockRobot:
                 abs_speed_mm_s = float(inst.get("speed", "10"))
             elif action in ("4", "10", "17"):
                 m = [float(inst.get(f"m{i}", "0")) for i in range(8)]
-                ck = int(inst.get("ckStatus", "63"))
+                ck_text = str(inst.get("ckStatus", "63"))
+                ck = int(ck_text, 0)
                 targets.append((action, m, ck, use_abs_speed, abs_speed_mm_s))
 
         if targets:

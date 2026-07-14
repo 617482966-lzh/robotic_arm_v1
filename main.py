@@ -2,14 +2,16 @@
 """机械臂控制与力传感数据采集 - 主程序入口 + 传感器控制器"""
 
 import sys
-import os
+import itertools
+import queue
+import threading
+import time
 import serial.tools.list_ports
-from datetime import datetime
 
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt, QThread, Signal
 
-from main_window import MainWindow
+from main_window_2 import MainWindow
 
 from sensor_2.communication import SensorCommunication
 from sensor_2.controller import SensorController
@@ -55,6 +57,93 @@ class SensorWorker(QThread):
         self.wait(2000)
 
 
+class RobotWorker(QThread):
+    """独占机械臂 socket 的后台工作线程。"""
+
+    connected = Signal(str, int)
+    disconnected = Signal()
+    pose_ready = Signal(object)
+    joints_ready = Signal(object)
+    command_done = Signal(str)
+    error_occurred = Signal(str)
+
+    def __init__(self, host, port, poll_interval=0.12):
+        super().__init__()
+        self.host = host
+        self.port = int(port)
+        self.poll_interval = float(poll_interval)
+        self.robot = None
+        self._stop_event = threading.Event()
+        self._commands = queue.PriorityQueue()
+        self._sequence = itertools.count()
+
+    def submit(self, command, *args, urgent=False):
+        priority = 0 if urgent else 10
+        self._commands.put((priority, next(self._sequence), command, args))
+
+    def stop(self, wait=False):
+        self._stop_event.set()
+        self.submit("disconnect", urgent=True)
+        if wait and QThread.currentThread() is not self:
+            self.wait(3000)
+
+    def _execute(self, command, args):
+        actions = {
+            "world_increment": self.robot.move_world_increment,
+            "world_absolute": self.robot.move_world_absolute,
+            "joint_increment": self.robot.move_joints_increment,
+            "joint_absolute": self.robot.move_joints_absolute,
+            "enable": self.robot.enable,
+            "disable": self.robot.disable,
+            "home": self.robot.home,
+            "stop": self.robot.emergency_stop,
+        }
+        if command == "disconnect":
+            self._stop_event.set()
+            return
+        action = actions.get(command)
+        if action is None:
+            raise ValueError(f"未知机械臂命令: {command}")
+        result = action(*args)
+        if result is None or result is False:
+            raise RuntimeError(f"机械臂未确认命令: {command}")
+        self.command_done.emit(command)
+
+    def run(self):
+        try:
+            self.robot = RobotComm(self.host, self.port)
+            self.robot.connect()
+            self.robot.configure_calibrated_speed_control()
+            self.connected.emit(self.host, self.port)
+            next_poll = 0.0
+            while not self._stop_event.is_set():
+                try:
+                    _, _, command, args = self._commands.get_nowait()
+                    try:
+                        self._execute(command, args)
+                    except Exception as exc:
+                        self.error_occurred.emit(str(exc))
+                    continue
+                except queue.Empty:
+                    pass
+                now = time.monotonic()
+                if now >= next_poll:
+                    pose, joints = self.robot.read_realtime_state()
+                    self.pose_ready.emit(pose)
+                    self.joints_ready.emit(joints)
+                    next_poll = now + self.poll_interval
+                else:
+                    time.sleep(min(0.02, next_poll - now))
+        except Exception as exc:
+            if not self._stop_event.is_set():
+                self.error_occurred.emit(str(exc))
+        finally:
+            if self.robot:
+                self.robot.disconnect()
+            self.robot = None
+            self.disconnected.emit()
+
+
 class AppController:
 
     def __init__(self):
@@ -65,11 +154,14 @@ class AppController:
         self.window = MainWindow()
         self.sensor_comm = None
         self.sensor_ctrl = None
-        self.robot_comm = None
+        self.robot_worker = None
         self.worker = None
 
         self._connect_signals()
         self._auto_detect_port()
+        self.window.set_motion_controls_enabled(False)
+        self.window.clear_robot_realtime_display()
+        self.app.aboutToQuit.connect(self._shutdown)
         self.window.show()
 
     def _auto_detect_port(self):
@@ -93,12 +185,18 @@ class AppController:
 
         self.window.robot_connect_requested.connect(self._on_robot_connect)
         self.window.robot_disconnect_requested.connect(self._on_robot_disconnect)
-        self.window.jog_cmd.connect(self._on_robot_jog)
-        self.window.jog_stop_cmd.connect(lambda: None)
-        self.window.robot_move_cmd.connect(self._on_robot_move)
-        self.window.speed_changed.connect(self._on_robot_speed)
-        self.window.ang_speed_changed.connect(lambda v: print(f"Ang speed: {v}"))
-        self.window.ptp_requested.connect(self._on_robot_ptp)
+        self.window.world_increment_requested.connect(
+            lambda request: self._submit_robot("world_increment", request.pose, request.speed_mm_s)
+        )
+        self.window.world_absolute_requested.connect(
+            lambda request: self._submit_robot("world_absolute", request.pose, request.speed_mm_s)
+        )
+        self.window.joint_increment_requested.connect(
+            lambda request: self._submit_robot("joint_increment", request.joints, request.speed_deg_s)
+        )
+        self.window.joint_absolute_requested.connect(
+            lambda request: self._submit_robot("joint_absolute", request.joints, request.speed_deg_s)
+        )
         self.window.home_requested.connect(self._on_robot_home)
         self.window.stop_requested.connect(self._on_robot_stop)
         self.window.robot_enable_changed.connect(self._on_robot_enable)
@@ -192,93 +290,80 @@ class AppController:
             self.window.statusBar().showMessage("传感器未连接", 3000)
 
     def _on_robot_connect(self, ip, port):
-        try:
-            self.robot_comm = RobotComm(ip, port)
-            self.robot_comm.connect()
-            self.window._set_robot_connected(True)
-            self.window.statusBar().showMessage(f"机械臂已连接: {ip}:{port}", 5000)
-        except Exception as e:
-            self.window.statusBar().showMessage(f"机械臂连接失败: {e}", 8000)
+        if self.robot_worker:
+            self.window.statusBar().showMessage("机械臂正在连接或已经连接", 3000)
+            return
+        self.window.statusBar().showMessage(f"正在连接机械臂: {ip}:{port}", 5000)
+        worker = RobotWorker(ip, port)
+        self.robot_worker = worker
+        worker.connected.connect(self._on_robot_connected)
+        worker.disconnected.connect(self._on_robot_worker_disconnected)
+        worker.pose_ready.connect(self._update_robot_pose)
+        worker.joints_ready.connect(self._update_robot_joints)
+        worker.command_done.connect(self._on_robot_command_done)
+        worker.error_occurred.connect(self._on_robot_error)
+        worker.start()
+
+    def _update_robot_pose(self, values):
+        self.window.update_pose(*values)
+
+    def _update_robot_joints(self, values):
+        self.window.update_joint_angles(*values)
+
+    def _on_robot_connected(self, ip, port):
+        self.window._set_robot_connected(True)
+        self.window.set_motion_controls_enabled(True)
+        self.window.statusBar().showMessage(f"机械臂已连接: {ip}:{port}", 5000)
 
     def _on_robot_disconnect(self):
-        if self.robot_comm:
-            self.robot_comm.disconnect()
-            self.robot_comm = None
+        if self.robot_worker:
+            self.robot_worker.stop()
+        else:
+            self._on_robot_worker_disconnected()
+
+    def _on_robot_worker_disconnected(self):
+        self.robot_worker = None
         self.window._set_robot_connected(False)
-        self.window.statusBar().showMessage("机械臂已断开", 5000)
+        self.window.set_motion_controls_enabled(False)
+        self.window.clear_robot_realtime_display()
+        self.window.statusBar().showMessage("机械臂已断开，实时显示已关闭", 5000)
 
-    def _on_robot_jog(self, axis, direction):
-        if self.robot_comm:
-            step = self.window.get_robot_step()
-            speed = self.window.get_robot_speed()
-            if step == 0.0:
-                step = 1.0
-            try:
-                self.robot_comm.move_jog(axis, direction, step, speed)
-                self.window.statusBar().showMessage(f"Jog {axis}{direction} {step}", 2000)
-            except Exception as e:
-                self.window.statusBar().showMessage(f"Jog 失败: {e}", 5000)
-
-    def _on_robot_move(self, axis, target):
-        if self.robot_comm:
-            try:
-                speed = self.window.get_robot_speed()
-                self.robot_comm.move_jog(axis, "+" if target >= 0 else "-", abs(target), speed)
-                self.window.statusBar().showMessage(f"移动 {axis} -> {target}", 2000)
-            except Exception as e:
-                self.window.statusBar().showMessage(f"移动失败: {e}", 5000)
-
-    def _on_robot_speed(self, speed):
-        if self.robot_comm:
-            try:
-                self.robot_comm.set_speed(speed)
-            except:
-                pass
-
-    def _on_robot_ptp(self):
-        if self.robot_comm:
-            try:
-                x = self.window._find_child("robotTargetX")
-                y = self.window._find_child("robotTargetY")
-                z = self.window._find_child("robotTargetZ")
-                rx = self.window._find_child("robotTargetRx")
-                ry = self.window._find_child("robotTargetRy")
-                rz = self.window._find_child("robotTargetRz")
-                speed = self.window.get_robot_speed()
-                if all([x, y, z, rx, ry, rz]):
-                    self.robot_comm.move_to(
-                        x.value(), y.value(), z.value(),
-                        rx.value(), ry.value(), rz.value(), speed
-                    )
-                    self.window.statusBar().showMessage("PTP 移动已发送", 2000)
-            except Exception as e:
-                self.window.statusBar().showMessage(f"PTP 失败: {e}", 5000)
+    def _submit_robot(self, command, *args, urgent=False):
+        if not self.robot_worker:
+            self.window.statusBar().showMessage("请先连接机械臂", 3000)
+            return
+        self.robot_worker.submit(command, *args, urgent=urgent)
 
     def _on_robot_home(self):
-        if self.robot_comm:
-            try:
-                self.robot_comm.home()
-                self.window.statusBar().showMessage("回零指令已发送", 2000)
-            except Exception as e:
-                self.window.statusBar().showMessage(f"回零失败: {e}", 5000)
+        self._submit_robot("home", 10.0)
 
     def _on_robot_stop(self):
-        if self.robot_comm:
-            try:
-                self.robot_comm.stop()
-                self.window.statusBar().showMessage("急停指令已发送", 2000)
-            except Exception as e:
-                self.window.statusBar().showMessage(f"急停失败: {e}", 5000)
+        self._submit_robot("stop", urgent=True)
 
     def _on_robot_enable(self, state):
-        if self.robot_comm:
-            try:
-                if state:
-                    self.robot_comm.enable()
-                else:
-                    self.robot_comm.disable()
-            except:
-                pass
+        self._submit_robot("enable" if state else "disable")
+
+    def _on_robot_command_done(self, command):
+        names = {
+            "world_increment": "末端增量运动",
+            "world_absolute": "末端目标运动",
+            "joint_increment": "关节增量运动",
+            "joint_absolute": "关节目标运动",
+            "enable": "使能",
+            "disable": "取消使能",
+            "home": "回零",
+            "stop": "急停",
+        }
+        self.window.statusBar().showMessage(f"{names.get(command, command)}指令已发送", 3000)
+
+    def _on_robot_error(self, message):
+        self.window.statusBar().showMessage(f"机械臂通信错误: {message}", 8000)
+
+    def _shutdown(self):
+        if self.robot_worker:
+            self.robot_worker.stop(wait=True)
+        if self.worker:
+            self.worker.stop()
 
     def run(self):
         return self.app.exec()

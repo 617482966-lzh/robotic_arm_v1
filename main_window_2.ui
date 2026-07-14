@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1604</width>
-    <height>1185</height>
+    <width>1103</width>
+    <height>866</height>
    </rect>
   </property>
-  <layout class="QGridLayout" name="gridLayout_5">
-   <item row="0" column="0">
+  <layout class="QVBoxLayout" name="rootLayout">
+   <item>
     <widget class="QSplitter" name="mainSplitter">
      <property name="orientation">
       <enum>Qt::Orientation::Horizontal</enum>
@@ -22,13 +22,13 @@
      <widget class="QScrollArea" name="robotScrollArea">
       <property name="minimumSize">
        <size>
-        <width>360</width>
+        <width>460</width>
         <height>0</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
-        <width>420</width>
+        <width>520</width>
         <height>16777215</height>
        </size>
       </property>
@@ -43,2543 +43,2542 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>416</width>
-         <height>1163</height>
+         <width>444</width>
+         <height>1000</height>
         </rect>
        </property>
-       <layout class="QGridLayout" name="gridLayout_6">
-        <item row="2" column="0">
-         <widget class="QGroupBox" name="robotPoseJogGroup_2">
-          <property name="title">
-           <string>当前末端位姿与位移控制</string>
-          </property>
-          <widget class="QWidget" name="">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>30</y>
-             <width>401</width>
-             <height>344</height>
-            </rect>
-           </property>
-           <layout class="QGridLayout" name="gridLayout_2">
-            <item row="0" column="0">
-             <layout class="QHBoxLayout" name="stepCoordRow_2"/>
-            </item>
-            <item row="1" column="1">
-             <layout class="QHBoxLayout" name="ptpRow_2">
-              <item>
-               <spacer name="hSpacerPTP_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>0</width>
-                  <height>0</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <spacer name="hSpacerPTP2_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>0</width>
-                  <height>0</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-            <item row="2" column="0" colspan="2">
-             <layout class="QHBoxLayout" name="poseRow_X_2">
-              <item>
-               <widget class="QLabel" name="poseLabel_X_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>28</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>X</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="poseSpin_X_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>80</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-                </property>
-                <property name="decimals">
-                 <number>3</number>
-                </property>
-                <property name="minimum">
-                 <double>-999.999000000000024</double>
-                </property>
-                <property name="maximum">
-                 <double>999.999000000000024</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="hSpacerPoseL_X_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>13</width>
-                  <height>13</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QPushButton" name="jogBtn_X_neg_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>36</width>
-                  <height>28</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="hSpacerJog_X_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>13</width>
-                  <height>13</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="robotTargetX_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>70</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="decimals">
-                 <number>3</number>
-                </property>
-                <property name="minimum">
-                 <double>-999.999000000000024</double>
-                </property>
-                <property name="maximum">
-                 <double>999.999000000000024</double>
-                </property>
-                <property name="value">
-                 <double>0.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="robotMoveX_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>40</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string>QPushButton{font-size:10px;padding:1px 4px;}</string>
-                </property>
-                <property name="text">
-                 <string>移动</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="poseUnit_X_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>24</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>mm</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="3" column="1">
-             <layout class="QHBoxLayout" name="poseRow_Y_2">
-              <item>
-               <widget class="QLabel" name="poseLabel_Y_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>28</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Y</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="poseSpin_Y_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>80</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-                </property>
-                <property name="decimals">
-                 <number>3</number>
-                </property>
-                <property name="minimum">
-                 <double>-999.999000000000024</double>
-                </property>
-                <property name="maximum">
-                 <double>999.999000000000024</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="hSpacerPoseL_Y_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>13</width>
-                  <height>25</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QPushButton" name="jogBtn_Y_neg_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>36</width>
-                  <height>28</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="hSpacerJog_Y_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>13</width>
-                  <height>25</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="robotTargetY_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>70</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="decimals">
-                 <number>3</number>
-                </property>
-                <property name="minimum">
-                 <double>-999.999000000000024</double>
-                </property>
-                <property name="maximum">
-                 <double>999.999000000000024</double>
-                </property>
-                <property name="value">
-                 <double>0.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="robotMoveY_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>40</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string>QPushButton{font-size:10px;padding:1px 4px;}</string>
-                </property>
-                <property name="text">
-                 <string>移动</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="poseUnit_Y_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>24</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>mm</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="4" column="1">
-             <layout class="QHBoxLayout" name="poseRow_Z_2">
-              <item>
-               <widget class="QLabel" name="poseLabel_Z_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>28</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Z</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="poseSpin_Z_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>80</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-                </property>
-                <property name="decimals">
-                 <number>3</number>
-                </property>
-                <property name="minimum">
-                 <double>-999.999000000000024</double>
-                </property>
-                <property name="maximum">
-                 <double>999.999000000000024</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="hSpacerPoseL_Z_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>13</width>
-                  <height>25</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QPushButton" name="jogBtn_Z_neg_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>36</width>
-                  <height>28</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="hSpacerJog_Z_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>13</width>
-                  <height>25</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="robotTargetZ_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>70</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="decimals">
-                 <number>3</number>
-                </property>
-                <property name="minimum">
-                 <double>-999.999000000000024</double>
-                </property>
-                <property name="maximum">
-                 <double>999.999000000000024</double>
-                </property>
-                <property name="value">
-                 <double>0.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="robotMoveZ_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>40</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string>QPushButton{font-size:10px;padding:1px 4px;}</string>
-                </property>
-                <property name="text">
-                 <string>移动</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="poseUnit_Z_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>24</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>mm</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="5" column="1">
-             <layout class="QHBoxLayout" name="poseRow_Rx_2">
-              <item>
-               <widget class="QLabel" name="poseLabel_Rx_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>28</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Rx</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="poseSpin_Rx_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>80</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-                </property>
-                <property name="decimals">
-                 <number>3</number>
-                </property>
-                <property name="minimum">
-                 <double>-360.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>360.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="hSpacerPoseL_Rx_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>13</width>
-                  <height>25</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QPushButton" name="jogBtn_Rx_neg_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>36</width>
-                  <height>28</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="hSpacerJog_Rx_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>13</width>
-                  <height>25</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="robotTargetRx_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>70</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="decimals">
-                 <number>3</number>
-                </property>
-                <property name="minimum">
-                 <double>-360.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>360.000000000000000</double>
-                </property>
-                <property name="value">
-                 <double>0.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="robotMoveRx_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>40</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string>QPushButton{font-size:10px;padding:1px 4px;}</string>
-                </property>
-                <property name="text">
-                 <string>移动</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="poseUnit_Rx_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>24</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>deg</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="6" column="1">
-             <layout class="QHBoxLayout" name="poseRow_Ry_2">
-              <item>
-               <widget class="QLabel" name="poseLabel_Ry_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>28</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Ry</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="poseSpin_Ry_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>80</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-                </property>
-                <property name="decimals">
-                 <number>3</number>
-                </property>
-                <property name="minimum">
-                 <double>-360.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>360.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="hSpacerPoseL_Ry_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>13</width>
-                  <height>25</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QPushButton" name="jogBtn_Ry_neg_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>36</width>
-                  <height>28</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="hSpacerJog_Ry_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>13</width>
-                  <height>25</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="robotTargetRy_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>70</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="decimals">
-                 <number>3</number>
-                </property>
-                <property name="minimum">
-                 <double>-360.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>360.000000000000000</double>
-                </property>
-                <property name="value">
-                 <double>0.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="robotMoveRy_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>40</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string>QPushButton{font-size:10px;padding:1px 4px;}</string>
-                </property>
-                <property name="text">
-                 <string>移动</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="poseUnit_Ry_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>24</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>deg</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="7" column="1">
-             <layout class="QHBoxLayout" name="poseRow_Rz_2">
-              <item>
-               <widget class="QLabel" name="poseLabel_Rz_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>28</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>Rz</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="poseSpin_Rz_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>80</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="readOnly">
-                 <bool>true</bool>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-                </property>
-                <property name="decimals">
-                 <number>3</number>
-                </property>
-                <property name="minimum">
-                 <double>-360.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>360.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="hSpacerPoseL_Rz_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>13</width>
-                  <height>25</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QPushButton" name="jogBtn_Rz_neg_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>36</width>
-                  <height>28</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="hSpacerJog_Rz_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>13</width>
-                  <height>25</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QDoubleSpinBox" name="robotTargetRz_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>70</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="decimals">
-                 <number>3</number>
-                </property>
-                <property name="minimum">
-                 <double>-360.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>360.000000000000000</double>
-                </property>
-                <property name="value">
-                 <double>0.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="robotMoveRz_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>40</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string>QPushButton{font-size:10px;padding:1px 4px;}</string>
-                </property>
-                <property name="text">
-                 <string>移动</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="poseUnit_Rz_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>24</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string>deg</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item row="8" column="1">
-             <layout class="QHBoxLayout" name="speedRow_2">
-              <item>
-               <widget class="QLabel" name="speedLabel_2">
-                <property name="text">
-                 <string>速度:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QSlider" name="robotSpeedSlider_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>140</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="minimum">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <number>100</number>
-                </property>
-                <property name="value">
-                 <number>50</number>
-                </property>
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QSpinBox" name="robotSpeedSpin_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>80</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="suffix">
-                 <string> mm/s</string>
-                </property>
-                <property name="minimum">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <number>100</number>
-                </property>
-                <property name="value">
-                 <number>50</number>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="hSpacerSpeed_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>13</width>
-                  <height>13</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-            <item row="9" column="1">
-             <layout class="QHBoxLayout" name="angSpeedRow_2">
-              <item>
-               <widget class="QLabel" name="angSpeedLabel_2">
-                <property name="text">
-                 <string>角速度:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QSlider" name="robotAngSpeedSlider_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>140</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="minimum">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <number>360</number>
-                </property>
-                <property name="value">
-                 <number>30</number>
-                </property>
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QSpinBox" name="robotAngSpeedSpin_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>80</width>
-                  <height>0</height>
-                 </size>
-                </property>
-                <property name="suffix">
-                 <string> deg/s</string>
-                </property>
-                <property name="minimum">
-                 <number>1</number>
-                </property>
-                <property name="maximum">
-                 <number>360</number>
-                </property>
-                <property name="value">
-                 <number>30</number>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="hSpacerAngSpeed_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>0</width>
-                  <height>0</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-            <item row="10" column="1">
-             <widget class="QPushButton" name="robotBtnPTP_2">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>38</height>
-               </size>
-              </property>
-              <property name="styleSheet">
-               <string>QPushButton{background-color:#2d2d46;border-color:#3a3a52;min-height:34px;font-size:14px;}</string>
-              </property>
-              <property name="text">
-               <string>点对点</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QGroupBox" name="robotPoseJogGroup">
-          <property name="title">
-           <string>当前末端位姿与位移控制</string>
-          </property>
-          <layout class="QGridLayout" name="gridLayout_3">
-           <item row="0" column="0">
-            <layout class="QHBoxLayout" name="poseRow_X">
-             <item>
-              <widget class="QLabel" name="poseLabel_X">
-               <property name="minimumSize">
-                <size>
-                 <width>28</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>X</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="poseSpin_X">
-               <property name="minimumSize">
-                <size>
-                 <width>80</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-               </property>
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="minimum">
-                <double>-999.999000000000024</double>
-               </property>
-               <property name="maximum">
-                <double>999.999000000000024</double>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="hSpacerPoseL_X">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>13</width>
-                 <height>13</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QPushButton" name="jogBtn_X_neg">
-               <property name="minimumSize">
-                <size>
-                 <width>36</width>
-                 <height>28</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="hSpacerJog_X">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>13</width>
-                 <height>13</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="robotTargetX">
-               <property name="minimumSize">
-                <size>
-                 <width>70</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="minimum">
-                <double>-999.999000000000024</double>
-               </property>
-               <property name="maximum">
-                <double>999.999000000000024</double>
-               </property>
-               <property name="value">
-                <double>0.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="robotMoveX">
-               <property name="minimumSize">
-                <size>
-                 <width>40</width>
-                 <height>24</height>
-                </size>
-               </property>
-               <property name="styleSheet">
-                <string>QPushButton{font-size:10px;padding:1px 4px;}</string>
-               </property>
-               <property name="text">
-                <string>移动</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="poseUnit_X">
-               <property name="minimumSize">
-                <size>
-                 <width>24</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>mm</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item row="1" column="0">
-            <layout class="QHBoxLayout" name="poseRow_Y">
-             <item>
-              <widget class="QLabel" name="poseLabel_Y">
-               <property name="minimumSize">
-                <size>
-                 <width>28</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>Y</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="poseSpin_Y">
-               <property name="minimumSize">
-                <size>
-                 <width>80</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-               </property>
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="minimum">
-                <double>-999.999000000000024</double>
-               </property>
-               <property name="maximum">
-                <double>999.999000000000024</double>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="hSpacerPoseL_Y">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>6</width>
-                 <height>0</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QPushButton" name="jogBtn_Y_neg">
-               <property name="minimumSize">
-                <size>
-                 <width>36</width>
-                 <height>28</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="hSpacerJog_Y">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>6</width>
-                 <height>0</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="robotTargetY">
-               <property name="minimumSize">
-                <size>
-                 <width>70</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="minimum">
-                <double>-999.999000000000024</double>
-               </property>
-               <property name="maximum">
-                <double>999.999000000000024</double>
-               </property>
-               <property name="value">
-                <double>0.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="robotMoveY">
-               <property name="minimumSize">
-                <size>
-                 <width>40</width>
-                 <height>24</height>
-                </size>
-               </property>
-               <property name="styleSheet">
-                <string>QPushButton{font-size:10px;padding:1px 4px;}</string>
-               </property>
-               <property name="text">
-                <string>移动</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="poseUnit_Y">
-               <property name="minimumSize">
-                <size>
-                 <width>24</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>mm</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item row="2" column="0">
-            <layout class="QHBoxLayout" name="poseRow_Z">
-             <item>
-              <widget class="QLabel" name="poseLabel_Z">
-               <property name="minimumSize">
-                <size>
-                 <width>28</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>Z</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="poseSpin_Z">
-               <property name="minimumSize">
-                <size>
-                 <width>80</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-               </property>
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="minimum">
-                <double>-999.999000000000024</double>
-               </property>
-               <property name="maximum">
-                <double>999.999000000000024</double>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="hSpacerPoseL_Z">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>6</width>
-                 <height>0</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QPushButton" name="jogBtn_Z_neg">
-               <property name="minimumSize">
-                <size>
-                 <width>36</width>
-                 <height>28</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="hSpacerJog_Z">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>6</width>
-                 <height>0</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="robotTargetZ">
-               <property name="minimumSize">
-                <size>
-                 <width>70</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="minimum">
-                <double>-999.999000000000024</double>
-               </property>
-               <property name="maximum">
-                <double>999.999000000000024</double>
-               </property>
-               <property name="value">
-                <double>0.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="robotMoveZ">
-               <property name="minimumSize">
-                <size>
-                 <width>40</width>
-                 <height>24</height>
-                </size>
-               </property>
-               <property name="styleSheet">
-                <string>QPushButton{font-size:10px;padding:1px 4px;}</string>
-               </property>
-               <property name="text">
-                <string>移动</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="poseUnit_Z">
-               <property name="minimumSize">
-                <size>
-                 <width>24</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>mm</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item row="3" column="0">
-            <layout class="QHBoxLayout" name="poseRow_Rx">
-             <item>
-              <widget class="QLabel" name="poseLabel_Rx">
-               <property name="minimumSize">
-                <size>
-                 <width>28</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>Rx</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="poseSpin_Rx">
-               <property name="minimumSize">
-                <size>
-                 <width>80</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-               </property>
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="minimum">
-                <double>-360.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>360.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="hSpacerPoseL_Rx">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>6</width>
-                 <height>0</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QPushButton" name="jogBtn_Rx_neg">
-               <property name="minimumSize">
-                <size>
-                 <width>36</width>
-                 <height>28</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="hSpacerJog_Rx">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>6</width>
-                 <height>0</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="robotTargetRx">
-               <property name="minimumSize">
-                <size>
-                 <width>70</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="minimum">
-                <double>-360.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>360.000000000000000</double>
-               </property>
-               <property name="value">
-                <double>0.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="robotMoveRx">
-               <property name="minimumSize">
-                <size>
-                 <width>40</width>
-                 <height>24</height>
-                </size>
-               </property>
-               <property name="styleSheet">
-                <string>QPushButton{font-size:10px;padding:1px 4px;}</string>
-               </property>
-               <property name="text">
-                <string>移动</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="poseUnit_Rx">
-               <property name="minimumSize">
-                <size>
-                 <width>24</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>deg</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item row="4" column="0">
-            <layout class="QHBoxLayout" name="poseRow_Ry">
-             <item>
-              <widget class="QLabel" name="poseLabel_Ry">
-               <property name="minimumSize">
-                <size>
-                 <width>28</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>Ry</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="poseSpin_Ry">
-               <property name="minimumSize">
-                <size>
-                 <width>80</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-               </property>
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="minimum">
-                <double>-360.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>360.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="hSpacerPoseL_Ry">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>6</width>
-                 <height>0</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QPushButton" name="jogBtn_Ry_neg">
-               <property name="minimumSize">
-                <size>
-                 <width>36</width>
-                 <height>28</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="hSpacerJog_Ry">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>6</width>
-                 <height>0</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="robotTargetRy">
-               <property name="minimumSize">
-                <size>
-                 <width>70</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="minimum">
-                <double>-360.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>360.000000000000000</double>
-               </property>
-               <property name="value">
-                <double>0.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="robotMoveRy">
-               <property name="minimumSize">
-                <size>
-                 <width>40</width>
-                 <height>24</height>
-                </size>
-               </property>
-               <property name="styleSheet">
-                <string>QPushButton{font-size:10px;padding:1px 4px;}</string>
-               </property>
-               <property name="text">
-                <string>移动</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="poseUnit_Ry">
-               <property name="minimumSize">
-                <size>
-                 <width>24</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>deg</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item row="5" column="0">
-            <layout class="QHBoxLayout" name="poseRow_Rz">
-             <item>
-              <widget class="QLabel" name="poseLabel_Rz">
-               <property name="minimumSize">
-                <size>
-                 <width>28</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>Rz</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="poseSpin_Rz">
-               <property name="minimumSize">
-                <size>
-                 <width>80</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-               <property name="buttonSymbols">
-                <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-               </property>
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="minimum">
-                <double>-360.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>360.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="hSpacerPoseL_Rz">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>6</width>
-                 <height>0</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QPushButton" name="jogBtn_Rz_neg">
-               <property name="minimumSize">
-                <size>
-                 <width>36</width>
-                 <height>28</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="hSpacerJog_Rz">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>6</width>
-                 <height>0</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QDoubleSpinBox" name="robotTargetRz">
-               <property name="minimumSize">
-                <size>
-                 <width>70</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="decimals">
-                <number>3</number>
-               </property>
-               <property name="minimum">
-                <double>-360.000000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>360.000000000000000</double>
-               </property>
-               <property name="value">
-                <double>0.000000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="robotMoveRz">
-               <property name="minimumSize">
-                <size>
-                 <width>40</width>
-                 <height>24</height>
-                </size>
-               </property>
-               <property name="styleSheet">
-                <string>QPushButton{font-size:10px;padding:1px 4px;}</string>
-               </property>
-               <property name="text">
-                <string>移动</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="poseUnit_Rz">
-               <property name="minimumSize">
-                <size>
-                 <width>24</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>deg</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item row="6" column="0">
-            <widget class="QFrame" name="sepLine">
-             <property name="frameShape">
-              <enum>QFrame::Shape::HLine</enum>
-             </property>
-            </widget>
-           </item>
-           <item row="7" column="0">
-            <layout class="QHBoxLayout" name="speedRow">
-             <item>
-              <widget class="QLabel" name="speedLabel">
-               <property name="text">
-                <string>速度:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QSlider" name="robotSpeedSlider">
-               <property name="minimumSize">
-                <size>
-                 <width>140</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="minimum">
-                <number>1</number>
-               </property>
-               <property name="maximum">
-                <number>100</number>
-               </property>
-               <property name="value">
-                <number>50</number>
-               </property>
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QSpinBox" name="robotSpeedSpin">
-               <property name="minimumSize">
-                <size>
-                 <width>80</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="suffix">
-                <string> mm/s</string>
-               </property>
-               <property name="minimum">
-                <number>1</number>
-               </property>
-               <property name="maximum">
-                <number>100</number>
-               </property>
-               <property name="value">
-                <number>50</number>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="hSpacerSpeed">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>0</width>
-                 <height>0</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
-           </item>
-           <item row="8" column="0">
-            <layout class="QHBoxLayout" name="angSpeedRow">
-             <item>
-              <widget class="QLabel" name="angSpeedLabel">
-               <property name="text">
-                <string>角速度:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QSlider" name="robotAngSpeedSlider">
-               <property name="minimumSize">
-                <size>
-                 <width>140</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="minimum">
-                <number>1</number>
-               </property>
-               <property name="maximum">
-                <number>360</number>
-               </property>
-               <property name="value">
-                <number>30</number>
-               </property>
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QSpinBox" name="robotAngSpeedSpin">
-               <property name="minimumSize">
-                <size>
-                 <width>80</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="suffix">
-                <string> deg/s</string>
-               </property>
-               <property name="minimum">
-                <number>1</number>
-               </property>
-               <property name="maximum">
-                <number>360</number>
-               </property>
-               <property name="value">
-                <number>30</number>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="hSpacerAngSpeed">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>0</width>
-                 <height>0</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
-           </item>
-           <item row="9" column="0">
-            <layout class="QHBoxLayout" name="stepCoordRow"/>
-           </item>
-           <item row="10" column="0">
-            <layout class="QHBoxLayout" name="ptpRow">
-             <item>
-              <spacer name="hSpacerPTP">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>0</width>
-                 <height>0</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <widget class="QPushButton" name="robotBtnPTP">
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>38</height>
-                </size>
-               </property>
-               <property name="styleSheet">
-                <string>QPushButton{background-color:#2d2d46;border-color:#3a3a52;min-height:34px;font-size:14px;}</string>
-               </property>
-               <property name="text">
-                <string>点对点</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <spacer name="hSpacerPTP2">
-               <property name="orientation">
-                <enum>Qt::Orientation::Horizontal</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>0</width>
-                 <height>0</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item row="0" column="0">
-         <widget class="QGroupBox" name="robotConnGroup">
-          <property name="title">
-           <string>连接</string>
-          </property>
-          <layout class="QGridLayout" name="gridLayout_4">
-           <item row="1" column="0">
-            <layout class="QHBoxLayout" name="robotConnRow2">
-             <item>
-              <widget class="QPushButton" name="robotBtnConnect">
-               <property name="text">
-                <string>连接</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="robotBtnDisconnect">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="text">
-                <string>断开</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="robotStatusLight">
-               <property name="minimumSize">
-                <size>
-                 <width>12</width>
-                 <height>12</height>
-                </size>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="robotStatusLabel">
-               <property name="text">
-                <string>未连接</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-           <item row="0" column="0">
-            <layout class="QHBoxLayout" name="robotConnRow1">
-             <item>
-              <widget class="QLabel" name="robotIpLabel">
-               <property name="text">
-                <string>IP:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="robotIpEdit">
-               <property name="maximumSize">
-                <size>
-                 <width>130</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>192.168.1.4</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="robotPortLabel">
-               <property name="text">
-                <string>端口:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="robotPortEdit">
-               <property name="maximumSize">
-                <size>
-                 <width>60</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="text">
-                <string>9760</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item row="3" column="0">
-         <widget class="QGroupBox" name="robotMemGroup">
-          <property name="title">
-           <string>位置记忆</string>
-          </property>
-          <widget class="QWidget" name="">
-           <layout class="QHBoxLayout" name="memRow_1">
-            <item>
-             <widget class="QLabel" name="memLabel_1">
-              <property name="minimumSize">
-               <size>
-                <width>24</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>P1</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignmentFlag::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="memVal_1">
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>--</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="memSave_1">
-              <property name="minimumSize">
-               <size>
-                <width>48</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>保存</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="memRecall_1">
-              <property name="minimumSize">
-               <size>
-                <width>48</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>调用</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="memClear_1">
-              <property name="minimumSize">
-               <size>
-                <width>28</width>
-                <height>24</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="hSpacerMem_1">
-              <property name="orientation">
-               <enum>Qt::Orientation::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </widget>
-          <widget class="QWidget" name="">
-           <layout class="QHBoxLayout" name="memRow_2">
-            <item>
-             <widget class="QLabel" name="memLabel_2">
-              <property name="minimumSize">
-               <size>
-                <width>24</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>P2</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignmentFlag::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="memVal_2">
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>--</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="memSave_2">
-              <property name="minimumSize">
-               <size>
-                <width>48</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>保存</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="memRecall_2">
-              <property name="minimumSize">
-               <size>
-                <width>48</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>调用</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="memClear_2">
-              <property name="minimumSize">
-               <size>
-                <width>28</width>
-                <height>24</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="hSpacerMem_2">
-              <property name="orientation">
-               <enum>Qt::Orientation::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </widget>
-          <widget class="QWidget" name="">
-           <layout class="QHBoxLayout" name="memRow_3">
-            <item>
-             <widget class="QLabel" name="memLabel_3">
-              <property name="minimumSize">
-               <size>
-                <width>24</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>P3</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignmentFlag::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="memVal_3">
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>--</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="memSave_3">
-              <property name="minimumSize">
-               <size>
-                <width>48</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>保存</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="memRecall_3">
-              <property name="minimumSize">
-               <size>
-                <width>48</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>调用</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="memClear_3">
-              <property name="minimumSize">
-               <size>
-                <width>28</width>
-                <height>24</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="hSpacerMem_3">
-              <property name="orientation">
-               <enum>Qt::Orientation::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </widget>
-          <widget class="QWidget" name="">
-           <layout class="QHBoxLayout" name="memRow_4">
-            <item>
-             <widget class="QLabel" name="memLabel_4">
-              <property name="minimumSize">
-               <size>
-                <width>24</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>P4</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignmentFlag::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="memVal_4">
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>--</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="memSave_4">
-              <property name="minimumSize">
-               <size>
-                <width>48</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>保存</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="memRecall_4">
-              <property name="minimumSize">
-               <size>
-                <width>48</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>调用</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="memClear_4">
-              <property name="minimumSize">
-               <size>
-                <width>28</width>
-                <height>24</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="hSpacerMem_4">
-              <property name="orientation">
-               <enum>Qt::Orientation::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </widget>
-          <widget class="QWidget" name="">
-           <layout class="QHBoxLayout" name="memRow_5">
-            <item>
-             <widget class="QLabel" name="memLabel_5">
-              <property name="minimumSize">
-               <size>
-                <width>24</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>P5</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignmentFlag::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="memVal_5">
-              <property name="minimumSize">
-               <size>
-                <width>100</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>--</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="memSave_5">
-              <property name="minimumSize">
-               <size>
-                <width>48</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>保存</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="memRecall_5">
-              <property name="minimumSize">
-               <size>
-                <width>48</width>
-                <height>24</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>调用</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="memClear_5">
-              <property name="minimumSize">
-               <size>
-                <width>28</width>
-                <height>24</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="hSpacerMem_5">
-              <property name="orientation">
-               <enum>Qt::Orientation::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </widget>
-         </widget>
-        </item>
-        <item row="4" column="0">
-         <layout class="QGridLayout" name="gridLayout">
-          <item row="0" column="2">
-           <widget class="QPushButton" name="robotBtnStop">
-            <property name="minimumSize">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>1000</height>
+        </size>
+       </property>
+       <widget class="QGroupBox" name="robotConnGroup">
+        <property name="geometry">
+         <rect>
+          <x>4</x>
+          <y>4</y>
+          <width>511</width>
+          <height>93</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>连接</string>
+        </property>
+        <widget class="QWidget" name="">
+         <property name="geometry">
+          <rect>
+           <x>11</x>
+           <y>17</y>
+           <width>421</width>
+           <height>41</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="robotConnRow1">
+          <item>
+           <widget class="QLabel" name="robotIpLabel">
+            <property name="text">
+             <string>IP:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="robotIpEdit">
+            <property name="maximumSize">
              <size>
-              <width>0</width>
-              <height>36</height>
+              <width>130</width>
+              <height>16777215</height>
              </size>
             </property>
             <property name="text">
-             <string>急停</string>
+             <string>192.168.1.4</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="0">
-           <widget class="QPushButton" name="robotBtnEnable">
+          <item>
+           <widget class="QLabel" name="robotPortLabel">
             <property name="text">
-             <string>使能</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
+             <string>端口:</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="1">
-           <widget class="QPushButton" name="robotBtnHome">
+          <item>
+           <widget class="QLineEdit" name="robotPortEdit">
+            <property name="maximumSize">
+             <size>
+              <width>60</width>
+              <height>16777215</height>
+             </size>
+            </property>
             <property name="text">
-             <string>回零</string>
+             <string>9760</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="hSpacerConn1">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="">
+         <property name="geometry">
+          <rect>
+           <x>11</x>
+           <y>54</y>
+           <width>421</width>
+           <height>31</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="robotConnRow2">
+          <item>
+           <widget class="QPushButton" name="robotBtnConnect">
+            <property name="text">
+             <string>连接</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="robotBtnDisconnect">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>断开</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="hSpacerConn2">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>10</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="robotStatusLight">
+            <property name="minimumSize">
+             <size>
+              <width>12</width>
+              <height>12</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="robotStatusLabel">
+            <property name="text">
+             <string>未连接</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="hSpacerConn3">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+       <widget class="QGroupBox" name="robotPoseGroup">
+        <property name="geometry">
+         <rect>
+          <x>4</x>
+          <y>102</y>
+          <width>511</width>
+          <height>271</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>末端位姿控制</string>
+        </property>
+        <widget class="QWidget" name="layoutWidget">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>98</y>
+           <width>151</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="poseRow_Rx_zengliang">
+          <item>
+           <widget class="QLabel" name="poseLabel_Rx">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Rx</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="robotTargetRx_zengliang">
+            <property name="minimumSize">
+             <size>
+              <width>70</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-360.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>360.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseUnit_Rx">
+            <property name="minimumSize">
+             <size>
+              <width>24</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>deg</string>
             </property>
            </widget>
           </item>
          </layout>
-        </item>
-       </layout>
+        </widget>
+        <widget class="QPushButton" name="robotBtnPTP_zengliang">
+         <property name="geometry">
+          <rect>
+           <x>400</x>
+           <y>126</y>
+           <width>96</width>
+           <height>32</height>
+          </rect>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>96</width>
+           <height>32</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string>QPushButton{background-color:#2d2d46;border-color:#3a3a52;min-height:28px;font-size:14px;}</string>
+         </property>
+         <property name="text">
+          <string>增量位移</string>
+         </property>
+        </widget>
+        <widget class="QWidget" name="layoutWidget_9">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>200</y>
+           <width>151</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="poseRow_Rx_global">
+          <item>
+           <widget class="QLabel" name="poseLabel_Rx_7">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Rx</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="robotTargetRx_global">
+            <property name="minimumSize">
+             <size>
+              <width>70</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-360.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>360.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseUnit_Rx_3">
+            <property name="minimumSize">
+             <size>
+              <width>24</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>deg</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="layoutWidget_10">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>170</y>
+           <width>151</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="poseRow_X_global">
+          <item>
+           <widget class="QLabel" name="poseLabel_X_7">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>X</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="robotTargetX_global">
+            <property name="minimumSize">
+             <size>
+              <width>70</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-999.999000000000024</double>
+            </property>
+            <property name="maximum">
+             <double>999.999000000000024</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseUnit_X_3">
+            <property name="minimumSize">
+             <size>
+              <width>24</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>mm</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="layoutWidget_11">
+         <property name="geometry">
+          <rect>
+           <x>170</x>
+           <y>170</y>
+           <width>151</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="poseRow_Y_global">
+          <item>
+           <widget class="QLabel" name="poseLabel_Y_7">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Y</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="robotTargetY_global">
+            <property name="minimumSize">
+             <size>
+              <width>70</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-999.999000000000024</double>
+            </property>
+            <property name="maximum">
+             <double>999.999000000000024</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseUnit_Y_3">
+            <property name="minimumSize">
+             <size>
+              <width>24</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>mm</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="layoutWidget_12">
+         <property name="geometry">
+          <rect>
+           <x>330</x>
+           <y>170</y>
+           <width>151</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="poseRow_Z_global">
+          <item>
+           <widget class="QLabel" name="poseLabel_Z_7">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Z</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="robotTargetZ_global">
+            <property name="minimumSize">
+             <size>
+              <width>70</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-999.999000000000024</double>
+            </property>
+            <property name="maximum">
+             <double>999.999000000000024</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseUnit_Z_3">
+            <property name="minimumSize">
+             <size>
+              <width>24</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>mm</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="layoutWidget_13">
+         <property name="geometry">
+          <rect>
+           <x>330</x>
+           <y>200</y>
+           <width>151</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="poseRow_Rz_global">
+          <item>
+           <widget class="QLabel" name="poseLabel_Rz_7">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Rz</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="robotTargetRz_global">
+            <property name="minimumSize">
+             <size>
+              <width>70</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-360.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>360.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseUnit_Rz_3">
+            <property name="minimumSize">
+             <size>
+              <width>24</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>deg</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="layoutWidget_14">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>232</y>
+           <width>375</width>
+           <height>24</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="speedRow_global">
+          <item>
+           <widget class="QLabel" name="speedLabel_3">
+            <property name="text">
+             <string>速度 (mm/s):</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSlider" name="robotSpeedSlider_global">
+            <property name="minimumSize">
+             <size>
+              <width>140</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>100</number>
+            </property>
+            <property name="value">
+             <number>5</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="robotSpeedSpin_global">
+            <property name="minimumSize">
+             <size>
+              <width>80</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>100</number>
+            </property>
+            <property name="value">
+             <number>5</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QPushButton" name="robotBtnPTP_global">
+         <property name="geometry">
+          <rect>
+           <x>400</x>
+           <y>228</y>
+           <width>96</width>
+           <height>32</height>
+          </rect>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>96</width>
+           <height>32</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string>QPushButton{background-color:#2d2d46;border-color:#3a3a52;min-height:28px;font-size:14px;}</string>
+         </property>
+         <property name="text">
+          <string>全局位移</string>
+         </property>
+        </widget>
+        <widget class="QWidget" name="layoutWidget_15">
+         <property name="geometry">
+          <rect>
+           <x>170</x>
+           <y>200</y>
+           <width>151</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="poseRow_Ry_global">
+          <item>
+           <widget class="QLabel" name="poseLabel_Ry_7">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Ry</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="robotTargetRy_global">
+            <property name="minimumSize">
+             <size>
+              <width>70</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-360.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>360.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseUnit_Ry_3">
+            <property name="minimumSize">
+             <size>
+              <width>24</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>deg</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="poseCurrentRowXYZ">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>20</y>
+           <width>491</width>
+           <height>22</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="poseRow_XYZ_current">
+          <item>
+           <widget class="QLabel" name="poseLabel_X_2">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>X=</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseValue_X">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>0</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseLabel_Y_2">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Y=</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseValue_Y">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>0</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseLabel_Z_2">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Z=</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseValue_Z">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>0</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="poseCurrentRowRotation">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>43</y>
+           <width>491</width>
+           <height>22</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="poseRow_Rotation_current">
+          <item>
+           <widget class="QLabel" name="poseLabel_Rx_2">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Rx=</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseValue_Rx">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>0</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseLabel_Ry_2">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Ry=</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseValue_Ry">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>0</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseLabel_Rz_2">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Rz=</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseValue_Rz">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>0</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="layoutWidget">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>68</y>
+           <width>151</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="poseRow_X_zengliang">
+          <item>
+           <widget class="QLabel" name="poseLabel_X">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>X</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="robotTargetX_zengliang">
+            <property name="minimumSize">
+             <size>
+              <width>70</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-999.999000000000024</double>
+            </property>
+            <property name="maximum">
+             <double>999.999000000000024</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseUnit_X">
+            <property name="minimumSize">
+             <size>
+              <width>24</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>mm</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="layoutWidget">
+         <property name="geometry">
+          <rect>
+           <x>170</x>
+           <y>68</y>
+           <width>151</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="poseRow_Y_zengliang">
+          <item>
+           <widget class="QLabel" name="poseLabel_Y">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Y</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="robotTargetY_zengliang">
+            <property name="minimumSize">
+             <size>
+              <width>70</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-999.999000000000024</double>
+            </property>
+            <property name="maximum">
+             <double>999.999000000000024</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseUnit_Y">
+            <property name="minimumSize">
+             <size>
+              <width>24</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>mm</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="layoutWidget">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>130</y>
+           <width>375</width>
+           <height>24</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="speedRow_zengliang">
+          <item>
+           <widget class="QLabel" name="speedLabel">
+            <property name="text">
+             <string>速度 (mm/s):</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSlider" name="robotSpeedSlider_zengliang">
+            <property name="minimumSize">
+             <size>
+              <width>140</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>100</number>
+            </property>
+            <property name="value">
+             <number>5</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="robotSpeedSpin_zengliang">
+            <property name="minimumSize">
+             <size>
+              <width>80</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>100</number>
+            </property>
+            <property name="value">
+             <number>5</number>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="layoutWidget">
+         <property name="geometry">
+          <rect>
+           <x>330</x>
+           <y>68</y>
+           <width>151</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="poseRow_Z_zengliang">
+          <item>
+           <widget class="QLabel" name="poseLabel_Z">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Z</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="robotTargetZ_zengliang">
+            <property name="minimumSize">
+             <size>
+              <width>70</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-999.999000000000024</double>
+            </property>
+            <property name="maximum">
+             <double>999.999000000000024</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseUnit_Z">
+            <property name="minimumSize">
+             <size>
+              <width>24</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>mm</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="layoutWidget">
+         <property name="geometry">
+          <rect>
+           <x>170</x>
+           <y>98</y>
+           <width>151</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="poseRow_Ry_zengliang">
+          <item>
+           <widget class="QLabel" name="poseLabel_Ry">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Ry</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="robotTargetRy_zengliang">
+            <property name="minimumSize">
+             <size>
+              <width>70</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-360.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>360.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseUnit_Ry">
+            <property name="minimumSize">
+             <size>
+              <width>24</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>deg</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="layoutWidget">
+         <property name="geometry">
+          <rect>
+           <x>330</x>
+           <y>98</y>
+           <width>151</width>
+           <height>30</height>
+          </rect>
+         </property>
+         <layout class="QHBoxLayout" name="poseRow_Rz_zengliang">
+          <item>
+           <widget class="QLabel" name="poseLabel_Rz">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Rz</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QDoubleSpinBox" name="robotTargetRz_zengliang">
+            <property name="minimumSize">
+             <size>
+              <width>70</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>-360.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>360.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="poseUnit_Rz">
+            <property name="minimumSize">
+             <size>
+              <width>24</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>deg</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+       <widget class="QGroupBox" name="robotJointGroup">
+        <property name="geometry">
+         <rect>
+          <x>4</x>
+          <y>370</y>
+          <width>511</width>
+          <height>335</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>关节角控制</string>
+        </property>
+        <layout class="QVBoxLayout" name="robotJointGroupLayout">
+         <property name="spacing">
+          <number>4</number>
+         </property>
+         <property name="leftMargin">
+          <number>8</number>
+         </property>
+         <property name="topMargin">
+          <number>6</number>
+         </property>
+         <property name="rightMargin">
+          <number>8</number>
+         </property>
+         <property name="bottomMargin">
+          <number>8</number>
+         </property>
+         <item>
+          <layout class="QHBoxLayout" name="jointPoseRow_123">
+           <property name="spacing">
+            <number>3</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="jointCurrentTitle">
+             <property name="text">
+              <string>实时:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointLabel_J1_current">
+             <property name="text">
+              <string>J1=</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointValue_J1">
+             <property name="minimumSize">
+              <size>
+               <width>28</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>0.000</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointLabel_J2_current">
+             <property name="text">
+              <string>J2=</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointValue_J2">
+             <property name="minimumSize">
+              <size>
+               <width>28</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>0.000</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointLabel_J3_current">
+             <property name="text">
+              <string>J3=</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointValue_J3">
+             <property name="minimumSize">
+              <size>
+               <width>28</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>0.000</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="jointPoseRow_456">
+           <property name="spacing">
+            <number>3</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="jointCurrentTitleSpacer">
+             <property name="minimumSize">
+              <size>
+               <width>32</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointLabel_J4_current">
+             <property name="text">
+              <string>J4=</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointValue_J4">
+             <property name="minimumSize">
+              <size>
+               <width>28</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>0.000</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointLabel_J5_current">
+             <property name="text">
+              <string>J5=</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointValue_J5">
+             <property name="minimumSize">
+              <size>
+               <width>28</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>0.000</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointLabel_J6_current">
+             <property name="text">
+              <string>J6=</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointValue_J6">
+             <property name="minimumSize">
+              <size>
+               <width>28</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>0.000</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="jointRow_123_zengliang">
+           <property name="spacing">
+            <number>4</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="jointLabel_J1_zengliang">
+             <property name="text">
+              <string>J1</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="robotJointTargetJ1_zengliang">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-360.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>360.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.100000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointUnit_J1_zengliang">
+             <property name="text">
+              <string>deg</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointLabel_J2_zengliang">
+             <property name="text">
+              <string>J2</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="robotJointTargetJ2_zengliang">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-360.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>360.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.100000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointUnit_J2_zengliang">
+             <property name="text">
+              <string>deg</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointLabel_J3_zengliang">
+             <property name="text">
+              <string>J3</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="robotJointTargetJ3_zengliang">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-360.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>360.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.100000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointUnit_J3_zengliang">
+             <property name="text">
+              <string>deg</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="jointRow_456_zengliang">
+           <property name="spacing">
+            <number>4</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="jointLabel_J4_zengliang">
+             <property name="text">
+              <string>J4</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="robotJointTargetJ4_zengliang">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-360.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>360.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.100000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointUnit_J4_zengliang">
+             <property name="text">
+              <string>deg</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointLabel_J5_zengliang">
+             <property name="text">
+              <string>J5</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="robotJointTargetJ5_zengliang">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-360.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>360.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.100000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointUnit_J5_zengliang">
+             <property name="text">
+              <string>deg</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointLabel_J6_zengliang">
+             <property name="text">
+              <string>J6</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="robotJointTargetJ6_zengliang">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-360.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>360.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.100000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointUnit_J6_zengliang">
+             <property name="text">
+              <string>deg</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="jointSpeedRow_zengliang">
+           <item>
+            <widget class="QLabel" name="jointSpeedLabel_zengliang">
+             <property name="text">
+              <string>增量速度 (deg/s):</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSlider" name="robotJointSpeedSlider_zengliang">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>100</number>
+             </property>
+             <property name="value">
+              <number>5</number>
+             </property>
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+           <widget class="QSpinBox" name="robotJointSpeedSpin_zengliang">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>10</number>
+             </property>
+             <property name="value">
+              <number>5</number>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="robotJointBtnPTP_zengliang">
+             <property name="minimumSize">
+              <size>
+               <width>96</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>96</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>发送增量</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QFrame" name="jointSectionLine">
+           <property name="frameShape">
+            <enum>QFrame::Shape::HLine</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Shadow::Sunken</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="jointRow_123_global">
+           <property name="spacing">
+            <number>4</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="jointLabel_J1_global">
+             <property name="text">
+              <string>J1</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="robotJointTargetJ1_global">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-360.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>360.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.100000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointUnit_J1_global">
+             <property name="text">
+              <string>deg</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointLabel_J2_global">
+             <property name="text">
+              <string>J2</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="robotJointTargetJ2_global">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-360.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>360.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.100000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointUnit_J2_global">
+             <property name="text">
+              <string>deg</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointLabel_J3_global">
+             <property name="text">
+              <string>J3</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="robotJointTargetJ3_global">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-360.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>360.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.100000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointUnit_J3_global">
+             <property name="text">
+              <string>deg</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="jointRow_456_global">
+           <property name="spacing">
+            <number>4</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="jointLabel_J4_global">
+             <property name="text">
+              <string>J4</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="robotJointTargetJ4_global">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-360.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>360.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.100000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointUnit_J4_global">
+             <property name="text">
+              <string>deg</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointLabel_J5_global">
+             <property name="text">
+              <string>J5</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="robotJointTargetJ5_global">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-360.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>360.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.100000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointUnit_J5_global">
+             <property name="text">
+              <string>deg</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointLabel_J6_global">
+             <property name="text">
+              <string>J6</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QDoubleSpinBox" name="robotJointTargetJ6_global">
+             <property name="decimals">
+              <number>3</number>
+             </property>
+             <property name="minimum">
+              <double>-360.000000000000000</double>
+             </property>
+             <property name="maximum">
+              <double>360.000000000000000</double>
+             </property>
+             <property name="singleStep">
+              <double>0.100000000000000</double>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="jointUnit_J6_global">
+             <property name="text">
+              <string>deg</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="jointSpeedRow_global">
+           <item>
+            <widget class="QLabel" name="jointSpeedLabel_global">
+             <property name="text">
+              <string>目标速度 (deg/s):</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSlider" name="robotJointSpeedSlider_global">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>100</number>
+             </property>
+             <property name="value">
+              <number>5</number>
+             </property>
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+           <widget class="QSpinBox" name="robotJointSpeedSpin_global">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>10</number>
+             </property>
+             <property name="value">
+              <number>5</number>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="robotJointBtnPTP_global">
+             <property name="minimumSize">
+              <size>
+               <width>96</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>96</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>发送目标</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QGroupBox" name="robotMemGroup">
+        <property name="geometry">
+         <rect>
+          <x>4</x>
+          <y>710</y>
+          <width>511</width>
+          <height>235</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>位置记忆</string>
+        </property>
+        <layout class="QVBoxLayout" name="robotMemLayout">
+         <item>
+          <layout class="QHBoxLayout" name="memoryTypeRow">
+           <item>
+            <widget class="QLabel" name="memoryTypeLabel">
+             <property name="text">
+              <string>保存类型:</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QComboBox" name="memoryTypeCombo">
+             <item>
+              <property name="text">
+               <string>关节角</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>世界坐标</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="memoryTypeHint">
+             <property name="text">
+              <string>保存当前实时位置</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="memoryTypeSpacer">
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="memRow_1">
+           <item>
+            <widget class="QLabel" name="memLabel_1">
+             <property name="minimumSize">
+              <size>
+               <width>24</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>P1</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="memVal_1">
+             <property name="minimumSize">
+              <size>
+               <width>100</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>--</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="memSave_1">
+             <property name="minimumSize">
+              <size>
+               <width>48</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>保存</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="memRecall_1">
+             <property name="minimumSize">
+              <size>
+               <width>48</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>调用</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="memClear_1">
+             <property name="minimumSize">
+              <size>
+               <width>28</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>清除</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="hSpacerMem_1">
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="memRow_2">
+           <item>
+            <widget class="QLabel" name="memLabel_2">
+             <property name="minimumSize">
+              <size>
+               <width>24</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>P2</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="memVal_2">
+             <property name="minimumSize">
+              <size>
+               <width>100</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>--</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="memSave_2">
+             <property name="minimumSize">
+              <size>
+               <width>48</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>保存</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="memRecall_2">
+             <property name="minimumSize">
+              <size>
+               <width>48</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>调用</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="memClear_2">
+             <property name="minimumSize">
+              <size>
+               <width>28</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>清除</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="hSpacerMem_2">
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="memRow_3">
+           <item>
+            <widget class="QLabel" name="memLabel_3">
+             <property name="minimumSize">
+              <size>
+               <width>24</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>P3</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="memVal_3">
+             <property name="minimumSize">
+              <size>
+               <width>100</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>--</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="memSave_3">
+             <property name="minimumSize">
+              <size>
+               <width>48</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>保存</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="memRecall_3">
+             <property name="minimumSize">
+              <size>
+               <width>48</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>调用</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="memClear_3">
+             <property name="minimumSize">
+              <size>
+               <width>28</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>清除</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="hSpacerMem_3">
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="memRow_4">
+           <item>
+            <widget class="QLabel" name="memLabel_4">
+             <property name="minimumSize">
+              <size>
+               <width>24</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>P4</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="memVal_4">
+             <property name="minimumSize">
+              <size>
+               <width>100</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>--</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="memSave_4">
+             <property name="minimumSize">
+              <size>
+               <width>48</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>保存</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="memRecall_4">
+             <property name="minimumSize">
+              <size>
+               <width>48</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>调用</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="memClear_4">
+             <property name="minimumSize">
+              <size>
+               <width>28</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>清除</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="hSpacerMem_4">
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="memRow_5">
+           <item>
+            <widget class="QLabel" name="memLabel_5">
+             <property name="minimumSize">
+              <size>
+               <width>24</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>P5</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignmentFlag::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="memVal_5">
+             <property name="minimumSize">
+              <size>
+               <width>100</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>--</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="memSave_5">
+             <property name="minimumSize">
+              <size>
+               <width>48</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>保存</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="memRecall_5">
+             <property name="minimumSize">
+              <size>
+               <width>48</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>调用</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="memClear_5">
+             <property name="minimumSize">
+              <size>
+               <width>28</width>
+               <height>24</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>清除</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="hSpacerMem_5">
+             <property name="orientation">
+              <enum>Qt::Orientation::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="robotActionContainer">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>944</y>
+          <width>495</width>
+          <height>38</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="0" column="0">
+          <widget class="QPushButton" name="robotBtnEnable">
+           <property name="text">
+            <string>使能</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QPushButton" name="robotBtnHome">
+           <property name="text">
+            <string>回零</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QPushButton" name="robotBtnStop">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>36</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>急停</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </widget>
      <widget class="QWidget" name="centerPanel">
@@ -2763,13 +2762,13 @@
      <widget class="QScrollArea" name="sensorScrollArea">
       <property name="minimumSize">
        <size>
-        <width>300</width>
+        <width>280</width>
         <height>0</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
-        <width>370</width>
+        <width>320</width>
         <height>16777215</height>
        </size>
       </property>
@@ -2784,8 +2783,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>366</width>
-         <height>1163</height>
+         <width>316</width>
+         <height>844</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="sensorMainLayout">
@@ -2867,6 +2866,19 @@
               </widget>
              </item>
              <item>
+              <spacer name="hSpacerSConn2">
+               <property name="orientation">
+                <enum>Qt::Orientation::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>8</width>
+                 <height>0</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item>
               <widget class="QLabel" name="sensorStatusLight">
                <property name="minimumSize">
                 <size>
@@ -2882,6 +2894,19 @@
                 <string>未连接</string>
                </property>
               </widget>
+             </item>
+             <item>
+              <spacer name="hSpacerSConn3">
+               <property name="orientation">
+                <enum>Qt::Orientation::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
+               </property>
+              </spacer>
              </item>
             </layout>
            </item>
