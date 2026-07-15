@@ -91,6 +91,7 @@ class RobotWorker(QThread):
         actions = {
             "world_increment": self.robot.move_world_increment,
             "world_absolute": self.robot.move_world_absolute,
+            "tool_vector_line": self.robot.move_tool_vector_interpolated,
             "joint_increment": self.robot.move_joints_increment,
             "joint_absolute": self.robot.move_joints_absolute,
             "enable": self.robot.enable,
@@ -208,9 +209,24 @@ class AppController:
         self.window.plot_ang_close.connect(lambda: self.window.set_plot_visible(1, False))
         self.window.plot_ang_reset.connect(lambda: self.window.reset_plot(1))
 
-        self.window.disp_test_start.connect(lambda: None)
+        self.window.disp_test_start.connect(self._on_disp_test_start)
         self.window.shear_test_start.connect(lambda: None)
         self.window.save_data_requested.connect(lambda p: print(f"Save: {p}"))
+
+    def _on_disp_test_start(self):
+        """沿当前末端局部+X方向执行定姿态直线插补。"""
+        speed_widget = self.window._find_child("testDispSpeed")
+        distance_widget = self.window._find_child("testDispDist")
+        if speed_widget is None or distance_widget is None:
+            self.window.statusBar().showMessage("找不到直线插补参数控件", 5000)
+            return
+        speed = float(speed_widget.value())
+        distance = float(distance_widget.value())
+        self._submit_robot("tool_vector_line", distance, speed, 5.0)
+        self.window.statusBar().showMessage(
+            f"已提交末端方向直线插补：{distance:+.1f} mm，{speed:.1f} mm/s，5 Hz",
+            5000,
+        )
 
     def _on_sensor_connect(self, port, baudrate, slave_addr):
         try:

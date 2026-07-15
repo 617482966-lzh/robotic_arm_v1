@@ -2324,7 +2324,7 @@
             </widget>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="testDispSpeedRow">
+<layout class="QHBoxLayout" name="testDispSpeedRow">
              <item>
               <widget class="QLabel" name="testDispSpeedLabel">
                <property name="text">
@@ -2340,11 +2340,8 @@
                  <height>0</height>
                 </size>
                </property>
-               <property name="suffix">
-                <string> mm/s</string>
-               </property>
                <property name="minimum">
-                <double>0.100000000000000</double>
+                <double>1.000000000000000</double>
                </property>
                <property name="maximum">
                 <double>100.000000000000000</double>
@@ -2354,10 +2351,23 @@
                </property>
               </widget>
              </item>
+             <item>
+              <widget class="QLabel" name="testDispSpeedUnit">
+               <property name="minimumSize">
+                <size>
+                 <width>40</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>mm/s</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="testDispDistRow">
+<layout class="QHBoxLayout" name="testDispDistRow">
              <item>
               <widget class="QLabel" name="testDispDistLabel">
                <property name="text">
@@ -2373,24 +2383,34 @@
                  <height>0</height>
                 </size>
                </property>
-               <property name="suffix">
-                <string> mm</string>
-               </property>
                <property name="minimum">
-                <double>0.100000000000000</double>
+                <double>-10.000000000000000</double>
                </property>
                <property name="maximum">
-                <double>200.000000000000000</double>
+                <double>10.000000000000000</double>
                </property>
                <property name="value">
                 <double>10.000000000000000</double>
                </property>
               </widget>
              </item>
+             <item>
+              <widget class="QLabel" name="testDispDistUnit">
+               <property name="minimumSize">
+                <size>
+                 <width>40</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>mm</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="testForceMaxRow">
+<layout class="QHBoxLayout" name="testForceMaxRow">
              <item>
               <widget class="QLabel" name="testForceMaxLabel">
                <property name="text">
@@ -2406,9 +2426,6 @@
                  <height>0</height>
                 </size>
                </property>
-               <property name="suffix">
-                <string> N</string>
-               </property>
                <property name="minimum">
                 <double>0.100000000000000</double>
                </property>
@@ -2417,6 +2434,19 @@
                </property>
                <property name="value">
                 <double>50.000000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="testForceMaxUnit">
+               <property name="minimumSize">
+                <size>
+                 <width>40</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>N</string>
                </property>
               </widget>
              </item>
@@ -2551,7 +2581,7 @@
             </widget>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="testAngSpeedRow">
+<layout class="QHBoxLayout" name="testAngSpeedRow">
              <item>
               <widget class="QLabel" name="testAngSpeedLabel">
                <property name="text">
@@ -2567,9 +2597,6 @@
                  <height>0</height>
                 </size>
                </property>
-               <property name="suffix">
-                <string> °/s</string>
-               </property>
                <property name="minimum">
                 <double>0.100000000000000</double>
                </property>
@@ -2581,10 +2608,23 @@
                </property>
               </widget>
              </item>
+             <item>
+              <widget class="QLabel" name="testAngSpeedUnit">
+               <property name="minimumSize">
+                <size>
+                 <width>40</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>°/s</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="testAngDistRow">
+<layout class="QHBoxLayout" name="testAngDistRow">
              <item>
               <widget class="QLabel" name="testAngDistLabel">
                <property name="text">
@@ -2600,9 +2640,6 @@
                  <height>0</height>
                 </size>
                </property>
-               <property name="suffix">
-                <string> °</string>
-               </property>
                <property name="minimum">
                 <double>0.100000000000000</double>
                </property>
@@ -2614,10 +2651,23 @@
                </property>
               </widget>
              </item>
+             <item>
+              <widget class="QLabel" name="testAngDistUnit">
+               <property name="minimumSize">
+                <size>
+                 <width>40</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>°</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="testTorqueMaxRow">
+<layout class="QHBoxLayout" name="testTorqueMaxRow">
              <item>
               <widget class="QLabel" name="testTorqueMaxLabel">
                <property name="text">
@@ -2633,9 +2683,6 @@
                  <height>0</height>
                 </size>
                </property>
-               <property name="suffix">
-                <string> N·m</string>
-               </property>
                <property name="minimum">
                 <double>0.010000000000000</double>
                </property>
@@ -2644,6 +2691,19 @@
                </property>
                <property name="value">
                 <double>5.000000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="testTorqueMaxUnit">
+               <property name="minimumSize">
+                <size>
+                 <width>40</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>N·m</string>
                </property>
               </widget>
              </item>

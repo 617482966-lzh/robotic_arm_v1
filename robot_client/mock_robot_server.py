@@ -15,10 +15,10 @@ class MockRobot:
     """Simulates robot state and responds to HC1 remote protocol queries."""
 
     def __init__(self):
-        # Current world position [X, Y, Z, U, V, W, M7, M8]
-        self.world = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        # Current joint angles [J1..J8]
-        self.joints = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        # 六轴世界位姿 [X, Y, Z, U, V, W]
+        self.world = [0.0] * 6
+        # 六轴关节角 [J1..J6]
+        self.joints = [0.0] * 6
         self.mode = "7"       # 7 = auto-running
         self.moving = False
         self.alarm = "0"
@@ -187,7 +187,7 @@ class MockRobot:
                 use_abs_speed = True
                 abs_speed_mm_s = float(inst.get("speed", "10"))
             elif action in ("4", "10", "17"):
-                m = [float(inst.get(f"m{i}", "0")) for i in range(8)]
+                m = [float(inst.get(f"m{i}", "0")) for i in range(6)]
                 ck_text = str(inst.get("ckStatus", "63"))
                 ck = int(ck_text, 0)
                 targets.append((action, m, ck, use_abs_speed, abs_speed_mm_s))
@@ -214,11 +214,11 @@ class MockRobot:
             self.moving = True
 
         # Determine which axes move (ck bitmask, bit1~bit8)
-        active = [bool(ck & (1 << i)) for i in range(8)]
+        active = [bool(ck & (1 << i)) for i in range(6)]
 
         # Calculate distance (only on active axes)
         dist = 0.0
-        for i in range(8):
+        for i in range(6):
             if active[i]:
                 d = target[i] - start[i]
                 dist += d * d
@@ -239,7 +239,7 @@ class MockRobot:
         for step in range(1, steps + 1):
             t = step / steps
             with self._lock:
-                for i in range(8):
+                for i in range(6):
                     if active[i]:
                         self.world[i] = start[i] + (target[i] - start[i]) * t
                         # Rough IK → joint approximation for display
@@ -248,7 +248,7 @@ class MockRobot:
 
         # Snap to exact target
         with self._lock:
-            for i in range(8):
+            for i in range(6):
                 if active[i]:
                     self.world[i] = target[i]
             self.moving = False

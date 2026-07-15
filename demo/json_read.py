@@ -10,7 +10,7 @@ HC1 / 伯朗特机器人 JSON 获取末端位姿
 
 查询地址来自文档：
 axis-n  : 轴位置，0:J1,1:J2,2:J3,3:J4,4:J5,5:J6
-world-n : 世界坐标轴位置，0:X,1:Y,2:Z,3:U,4:V,5:W,6:M7,7:M8
+world-n : 六轴世界坐标，0:X,1:Y,2:Z,3:U,4:V,5:W
 """
 
 import socket
@@ -193,8 +193,6 @@ class HC1JsonReader:
             3:U
             4:V
             5:W
-            6:M7
-            7:M8
 
         这里先读取 world-0~world-5。
         """
@@ -234,42 +232,6 @@ class HC1JsonReader:
             print("[FAIL] world 位姿数值解析失败:", e)
             print("queryData =", q)
             return None
-
-    def read_world_pose_8axis(self):
-        """
-        如果你想把 M7、M8 也读出来，用这个函数。
-        """
-        addrs = [
-            "world-0",
-            "world-1",
-            "world-2",
-            "world-3",
-            "world-4",
-            "world-5",
-            "world-6",
-            "world-7",
-        ]
-
-        rep = self.query(addrs)
-
-        if not rep or "queryData" not in rep:
-            return None
-
-        q = rep["queryData"]
-
-        try:
-            data = {}
-            names = ["x", "y", "z", "u", "v", "w", "m7", "m8"]
-
-            for name, value in zip(names, q):
-                data[name] = float(value)
-
-            return data
-
-        except Exception:
-            return {
-                "raw": q
-            }
 
     def print_all(self):
         print("\n================ JSON 当前信息 ================")

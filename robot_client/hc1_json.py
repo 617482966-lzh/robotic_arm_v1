@@ -10,25 +10,12 @@ HC1 / 伯朗特机器人 JSON 远程控制模块 — 基于 HCRemoteCommand 协�
   4. 姿势直线 (action=10), 输入世界坐标系
   5. 急停 (actionStop), 停止所有运动
   6. 解除所有报警 (clearAlarm)
-  7. 保持姿态，沿末端当前局部 +X 方向移动指定三维距离
-
-快速使用（在项目根目录执行）:
-  读取状态:
-    C:\\Users\\www61\\anaconda3\\envs\\common\\python.exe demo\\json_write.py read_status
-  沿姿态向量正向移动 10 mm，速度 1 mm/s:
-    C:\\Users\\www61\\anaconda3\\envs\\common\\python.exe demo\\json_write.py tool_x 10 --speed 1
-  沿反方向返回 10 mm:
-    C:\\Users\\www61\\anaconda3\\envs\\common\\python.exe demo\\json_write.py tool_x -10 --speed 1
-
-完整说明见 demo/README.md。实机运动前必须确认自动模式、无报警、静止、
-远程指令列表为空，并确保运动方向上没有人员或障碍物。
 """
 
 import socket
 import json
 import time
 import threading
-import math
 
 # 默认连接参数
 HOST = "192.168.1.4"
@@ -210,6 +197,28 @@ class HC1JsonRobot:
     def stop_button(self):
         """停止按键 (等同急停, 同时清除报警)"""
         return self.command(["stopButton"])
+
+    def _build_pose_curve_inst(self, start, target, speed_pct=50.0,
+                               ck_status=0x3F, one_shot=True,
+                               tool=0, coord=0, smooth=9):
+        """构建姿势曲线指令(action=17)，m为起点，m_p为终点。"""
+        start = tuple(float(v) for v in start)
+        target = tuple(float(v) for v in target)
+        if len(start) != 6 or len(target) != 6:
+            raise ValueError("姿势曲线起点和终点都必须包含6个值")
+        inst = {
+            "oneshot": "1" if one_shot else "0",
+            "action": "17",
+            "ckStatus": f"0x{ck_status:X}",
+            "speed": str(int(speed_pct)),
+            "tool": str(tool), "coord": str(coord),
+            "smooth": str(smooth),
+        }
+        for index, value in enumerate(start):
+            inst[f"m{index}"] = f"{value:.3f}"
+        for index, value in enumerate(target):
+            inst[f"m{index}_p"] = f"{value:.3f}"
+        return inst
 
     # ---- 功能6: 解除所有报警 ----
 
@@ -510,82 +519,6 @@ class HC1JsonRobot:
         )
         return True
 
-    @staticmethod
-    def tool_x_axis_in_world(u_deg, v_deg, w_deg):
-        """按本机械臂定义计算姿态在世界XZ平面的前向单位向量。
-
-        运动方向只由俯仰角Ry(V)决定：X恒取前向正分量，Z随正Ry向下；
-        U和W不参与方向计算，仅作为保持不变的末端姿态。
-        """
-        ry = math.radians(float(v_deg))
-        vector = (
-            math.cos(ry),
-            0.0,
-            -math.sin(ry),
-        )
-        norm = math.sqrt(sum(value * value for value in vector))
-        if norm <= 1e-12:
-            raise ValueError("当前姿态无法计算有效方向向量")
-        return tuple(value / norm for value in vector)
-
-    def move_along_tool_x(self, distance_mm, speed_mm_s=1.0, show=True):
-        """保持U/V/W不变，沿末端当前局部+X方向移动指定空间距离。
-
-        正距离沿局部+X，负距离沿局部-X。为配合当前实机安全范围，
-        距离限制为±60 mm。action10使用ckStatus=0x07，只使能XYZ，
-        因此姿态轴不会被控制器重新规划。
-        """
-        distance = float(distance_mm)
-        speed = float(speed_mm_s)
-        if not 0 < abs(distance) <= 60.0:
-            raise ValueError("移动距离必须在-60~60 mm内且不能为0")
-        if speed < 1.0:
-            raise ValueError("物理速度不能低于1 mm/s")
-
-        current = self.read_world_pose()
-        if current is None:
-            raise RuntimeError("无法读取当前末端世界坐标")
-        direction = self.tool_x_axis_in_world(
-            current["u"], current["v"], current["w"]
-        )
-        delta = tuple(distance * value for value in direction)
-        target = (
-            current["x"] + delta[0],
-            current["y"] + delta[1],
-            current["z"] + delta[2],
-            current["u"], current["v"], current["w"],
-        )
-        move = self._build_pose_line_inst(
-            *target,
-            speed_pct=int(round(speed)),
-            ck_status=0x07,
-            one_shot=True,
-            smooth=9,
-        )
-        # action51提供mm/s物理速度；action10不再携带speed，避免覆盖。
-        move.pop("speed", None)
-        speed_inst = {
-            "oneshot": "0", "action": "51", "isUse": "1",
-            "speed": str(int(round(speed))),
-        }
-        reply = self.add_rcc([speed_inst, move], empty=True, show=show)
-        result = {
-            "start": tuple(current[key] for key in ("x", "y", "z", "u", "v", "w")),
-            "direction": direction,
-            "delta_xyz": delta,
-            "target": target,
-            "distance_mm": distance,
-            "speed_mm_s": speed,
-            "reply": reply,
-        }
-        print(
-            "末端方向移动: "
-            f"距离={distance:+.3f} mm, "
-            f"方向=({direction[0]:+.6f}, {direction[1]:+.6f}, {direction[2]:+.6f}), "
-            f"ΔXYZ=({delta[0]:+.3f}, {delta[1]:+.3f}, {delta[2]:+.3f})"
-        )
-        return result
-
         """姿势直线 (从字典传参)
         pose: {"x": ..., "y": ..., "z": ..., "u": ..., "v": ..., "w": ...}
         """
@@ -658,10 +591,6 @@ if __name__ == "__main__":
         p_pby.add_argument(f"--{a}", type=float, default=0.0, help=f"世界坐标增量 {a[1:]} (mm/deg)")
     p_pby.add_argument("--speed", type=float, default=50.0, help="速度百分比")
     p_pby.add_argument("--oneshot", type=int, choices=[0, 1], default=1, help="1=执行一次, 0=循环")
-    # 保持姿态，沿末端局部X方向移动指定三维距离
-    p_tool = sub.add_parser("tool_x", help="保持姿态，沿末端当前局部X方向移动")
-    p_tool.add_argument("distance_mm", type=float, help="空间距离(mm)，正值+X，负值-X，范围±60")
-    p_tool.add_argument("--speed", type=float, default=1.0, help="物理速度(mm/s)，默认1")
     # 控制命令
     sub.add_parser("stop", help="急停")
     sub.add_parser("clear_alarm", help="清除报警")
@@ -704,8 +633,6 @@ if __name__ == "__main__":
         elif args.cmd == "pose_by":
             robot.move_pose_line_by(args.dx, args.dy, args.dz, args.du, args.dv, args.dw,
                                     speed_pct=args.speed, one_shot=bool(args.oneshot))
-        elif args.cmd == "tool_x":
-            robot.move_along_tool_x(args.distance_mm, speed_mm_s=args.speed)
         elif args.cmd == "stop":
             robot.emergency_stop()
         elif args.cmd == "clear_alarm":
