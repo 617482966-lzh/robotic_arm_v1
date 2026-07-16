@@ -6,16 +6,21 @@ import itertools
 import queue
 import threading
 import time
+from pathlib import Path
 import serial.tools.list_ports
+from openpyxl import Workbook
 
 from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtCore import Qt, QThread, QTimer, Signal
 
 from main_window_2 import MainWindow
 
 from sensor_2.communication import SensorCommunication
 from sensor_2.controller import SensorController
 from robot_client.robot_control import BorunteRobot as RobotComm
+
+
+SAMPLE_INTERVAL_MS = 50  # 20 Hz
 
 
 def find_serial_a_port():
@@ -67,7 +72,7 @@ class RobotWorker(QThread):
     command_done = Signal(str)
     error_occurred = Signal(str)
 
-    def __init__(self, host, port, poll_interval=0.12):
+    def __init__(self, host, port, poll_interval=0.05):
         super().__init__()
         self.host = host
         self.port = int(port)
@@ -92,12 +97,14 @@ class RobotWorker(QThread):
             "world_increment": self.robot.move_world_increment,
             "world_absolute": self.robot.move_world_absolute,
             "tool_vector_line": self.robot.move_tool_vector_interpolated,
+            "move_along_tool_x": self.robot.move_along_tool_x,
             "joint_increment": self.robot.move_joints_increment,
             "joint_absolute": self.robot.move_joints_absolute,
             "enable": self.robot.enable,
             "disable": self.robot.disable,
             "home": self.robot.home,
             "stop": self.robot.emergency_stop,
+            "safe_stop": self.robot.safe_stop_and_clear,
         }
         if command == "disconnect":
             self._stop_event.set()
@@ -145,6 +152,33 @@ class RobotWorker(QThread):
             self.disconnected.emit()
 
 
+class XlsxExportWorker(QThread):
+    """Write test rows without blocking the GUI thread."""
+
+    saved = Signal(str)
+    failed = Signal(str)
+
+    def __init__(self, filepath, headers, rows, parent=None):
+        super().__init__(parent)
+        self.filepath = str(filepath)
+        self.headers = tuple(headers)
+        self.rows = tuple(tuple(row) for row in rows)
+
+    def run(self):
+        try:
+            path = Path(self.filepath)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            workbook = Workbook(write_only=True)
+            sheet = workbook.create_sheet("试验数据")
+            sheet.append(self.headers)
+            for row in self.rows:
+                sheet.append(row)
+            workbook.save(path)
+            self.saved.emit(str(path))
+        except Exception as exc:
+            self.failed.emit(str(exc))
+
+
 class AppController:
 
     def __init__(self):
@@ -157,13 +191,24 @@ class AppController:
         self.sensor_ctrl = None
         self.robot_worker = None
         self.worker = None
+        self._latest_pose = None
+        self._latest_joints = None
+        self._latest_fz = 0.0
+        self._latest_tz = 0.0
+        self._active_test = None
+        self._test_data = {"testDisp": [], "testShear": []}
+        self._export_workers = set()
+
+        self._sample_timer = QTimer(self.window)
+        self._sample_timer.setInterval(SAMPLE_INTERVAL_MS)
+        self._sample_timer.timeout.connect(self._sample_active_test)
 
         self._connect_signals()
         self._auto_detect_port()
         self.window.set_motion_controls_enabled(False)
         self.window.clear_robot_realtime_display()
         self.app.aboutToQuit.connect(self._shutdown)
-        self.window.show()
+        self.window.showMaximized()
 
     def _auto_detect_port(self):
         port = find_serial_a_port()
@@ -210,23 +255,194 @@ class AppController:
         self.window.plot_ang_reset.connect(lambda: self.window.reset_plot(1))
 
         self.window.disp_test_start.connect(self._on_disp_test_start)
-        self.window.shear_test_start.connect(lambda: None)
-        self.window.save_data_requested.connect(lambda p: print(f"Save: {p}"))
+        self.window.shear_test_start.connect(self._on_shear_test_start)
+        self.window.test_save_requested.connect(self._save_test_data)
+        self.window.test_reset_requested.connect(self._reset_test_data)
 
     def _on_disp_test_start(self):
-        """沿当前末端局部+X方向执行定姿态直线插补。"""
-        speed_widget = self.window._find_child("testDispSpeed")
-        distance_widget = self.window._find_child("testDispDist")
-        if speed_widget is None or distance_widget is None:
-            self.window.statusBar().showMessage("找不到直线插补参数控件", 5000)
+        """Start penetration along the current tool-X vector."""
+        if not self._can_start_test("贯入"):
             return
-        speed = float(speed_widget.value())
-        distance = float(distance_widget.value())
-        self._submit_robot("tool_vector_line", distance, speed, 5.0)
+        speed, distance, max_force = map(float, self.window.get_test_params_disp())
+        direction = RobotComm.penetration_axis_in_world()
+        self._begin_test("testDisp", distance, max_force, direction=direction)
+        self._submit_robot("move_along_tool_x", distance, speed)
         self.window.statusBar().showMessage(
-            f"已提交末端方向直线插补：{distance:+.1f} mm，{speed:.1f} mm/s，5 Hz",
-            5000,
+            f"贯入试验已启动：{distance:g} mm，{speed:g} mm/s，力阈值{max_force:g} N", 5000
         )
+
+    def _on_shear_test_start(self):
+        """Start a J6-only shear test."""
+        if not self._can_start_test("剪切"):
+            return
+        speed, angle, max_torque = map(float, self.window.get_test_params_shear())
+        self._begin_test("testShear", angle, max_torque)
+        self._submit_robot("joint_increment", (0, 0, 0, 0, 0, angle), speed)
+        self.window.statusBar().showMessage(
+            f"剪切试验已启动：J6 {angle:g} deg，{speed:g} deg/s，扭矩阈值{max_torque:g} N·m", 5000
+        )
+
+    def _can_start_test(self, label):
+        if self._active_test is not None:
+            self.window.statusBar().showMessage("已有试验正在运行，请先等待或停止", 5000)
+            return False
+        if not self.robot_worker or self._latest_pose is None or self._latest_joints is None:
+            self.window.statusBar().showMessage(f"{label}试验需要先连接机械臂", 5000)
+            return False
+        return True
+
+    def _begin_test(self, kind, target, limit, direction=None):
+        self._test_data[kind].clear()
+        self.window.reset_plot(0 if kind == "testDisp" else 1)
+        start_pose = tuple(self._latest_pose)
+        target_xyz = None
+        if direction is not None:
+            target_xyz = tuple(
+                start_pose[index] + float(target) * direction[index]
+                for index in range(3)
+            )
+        self._active_test = {
+            "kind": kind,
+            "started": time.monotonic(),
+            "target": abs(float(target)),
+            "sign": 1.0 if float(target) >= 0 else -1.0,
+            "limit": abs(float(limit)),
+            "start_pose": start_pose,
+            "target_xyz": target_xyz,
+            "start_joints": tuple(self._latest_joints),
+            "direction": direction,
+            "base_fz": self._latest_fz if self.worker else 0.0,
+            "base_tz": self._latest_tz if self.worker else 0.0,
+            "previous_j6": float(self._latest_joints[5]),
+            "accumulated_j6": 0.0,
+        }
+        self._sample_active_test()
+        self._sample_timer.start()
+
+    @staticmethod
+    def _shortest_angle_delta(current, previous):
+        return (float(current) - float(previous) + 180.0) % 360.0 - 180.0
+
+    def _sample_active_test(self):
+        state = self._active_test
+        if state is None or self._latest_pose is None or self._latest_joints is None:
+            return
+        pose = tuple(self._latest_pose)
+        joints = tuple(self._latest_joints)
+        fz = self._latest_fz - state["base_fz"] if self.worker else 0.0
+        tz = self._latest_tz - state["base_tz"] if self.worker else 0.0
+        elapsed_ms = (time.monotonic() - state["started"]) * 1000.0
+
+        if state["kind"] == "testDisp":
+            delta = tuple(pose[i] - state["start_pose"][i] for i in range(3))
+            projection = sum(delta[i] * state["direction"][i] for i in range(3))
+            depth = max(0.0, state["sign"] * projection)
+            angle = 0.0
+            self.window.add_disp_force(depth, fz)
+            remaining = sum(
+                (pose[i] - state["target_xyz"][i]) ** 2 for i in range(3)
+            ) ** 0.5
+            reached = remaining <= 0.3 or depth >= state["target"] - 0.2
+            # 保存和曲线使用起点置零后的相对力；安全上限必须与界面显示的
+            # 原始Fz比较，否则存在起始预载荷时会延迟甚至完全不触发停止。
+            overloaded = abs(self._latest_fz) >= state["limit"]
+            reason = "达到目标世界坐标" if reached else "达到最大力"
+        else:
+            step = self._shortest_angle_delta(joints[5], state["previous_j6"])
+            state["accumulated_j6"] += step
+            state["previous_j6"] = joints[5]
+            angle = max(0.0, state["sign"] * state["accumulated_j6"])
+            depth = 0.0
+            self.window.add_ang_torque(angle, tz)
+            reached = angle >= state["target"] - 0.1
+            overloaded = abs(self._latest_tz) >= state["limit"]
+            reason = "达到目标角位移" if reached else "达到最大扭矩"
+
+        self._test_data[state["kind"]].append((
+            round(elapsed_ms, 3), round(depth, 6), round(angle, 6),
+            round(fz, 6), round(tz, 6),
+            round(self._latest_fz if self.worker else 0.0, 6),
+            round(self._latest_tz if self.worker else 0.0, 6),
+            *pose, *joints,
+        ))
+        if (reached or overloaded) and not state.get("stop_requested"):
+            self._finish_active_test(reason, send_stop=True)
+
+    def _finish_active_test(self, reason, send_stop):
+        if self._active_test is None:
+            return
+        if send_stop:
+            if self._active_test.get("stop_requested"):
+                return
+            self._active_test["stop_requested"] = True
+            self._active_test["stop_reason"] = reason
+            self._submit_robot("safe_stop", urgent=True)
+            self.window.statusBar().showMessage(
+                "正在actionStop立即停止；结束后请在示教器重新切回自动模式…", 10000
+            )
+            return
+        kind = self._active_test["kind"]
+        clear_on_stop = self._active_test.get("clear_on_stop", False)
+        self._active_test = None
+        self._sample_timer.stop()
+        if clear_on_stop:
+            self._test_data[kind].clear()
+            self.window.reset_plot(0 if kind == "testDisp" else 1)
+        label = "贯入" if kind == "testDisp" else "剪切"
+        self.window.statusBar().showMessage(
+            f"{label}试验结束：{reason}；请确认示教器已重新切回自动模式", 12000
+        )
+
+    def _reset_test_data(self, kind):
+        if self._active_test and self._active_test["kind"] == kind:
+            self._active_test["clear_on_stop"] = True
+            self._finish_active_test("用户重置", send_stop=True)
+            return
+        self._test_data[kind].clear()
+        self.window.reset_plot(0 if kind == "testDisp" else 1)
+        self.window.statusBar().showMessage("试验数据和曲线已清空", 3000)
+
+    def _save_test_data(self, kind, filepath):
+        rows = tuple(self._test_data.get(kind, ()))
+        if not rows:
+            self.window.statusBar().showMessage("没有可保存的试验数据", 5000)
+            return
+        common_headers = (
+            "X/mm", "Y/mm", "Z/mm", "U/deg", "V/deg", "W/deg",
+            "J1/deg", "J2/deg", "J3/deg", "J4/deg", "J5/deg", "J6/deg",
+        )
+        if kind == "testDisp":
+            headers = (
+                "时间戳/ms", "贯入深度/mm", "拉压力/N", "扭矩/N·m",
+                "原始拉压力/N", "原始扭矩/N·m", *common_headers,
+            )
+            rows = tuple(
+                (row[0], row[1], row[3], row[4], row[5], row[6], *row[7:])
+                for row in rows
+            )
+        else:
+            headers = (
+                "时间戳/ms", "角位移/deg", "扭矩/N·m", "拉压力/N",
+                "原始扭矩/N·m", "原始拉压力/N", *common_headers,
+            )
+            rows = tuple(
+                (row[0], row[2], row[4], row[3], row[6], row[5], *row[7:])
+                for row in rows
+            )
+        exporter = XlsxExportWorker(filepath, headers, rows, self.window)
+        self._export_workers.add(exporter)
+        exporter.saved.connect(lambda path, w=exporter: self._on_export_finished(w, path, None))
+        exporter.failed.connect(lambda error, w=exporter: self._on_export_finished(w, None, error))
+        exporter.start()
+        self.window.statusBar().showMessage("正在后台保存XLSX…", 3000)
+
+    def _on_export_finished(self, worker, path, error):
+        self._export_workers.discard(worker)
+        worker.deleteLater()
+        if error:
+            self.window.statusBar().showMessage(f"保存失败：{error}", 8000)
+        else:
+            self.window.statusBar().showMessage(f"已保存：{path}", 8000)
 
     def _on_sensor_connect(self, port, baudrate, slave_addr):
         try:
@@ -261,7 +477,21 @@ class AppController:
         self.window.statusBar().showMessage("传感器已断开", 5000)
 
     def _on_data_ready(self, fz, tz):
+        self._latest_fz = float(fz)
+        self._latest_tz = float(tz)
         self.window.update_force_torque(fz, tz)
+        # 直接在20 Hz传感器数据到达时检查阈值，避免再等待GUI采样定时器，
+        # 最坏可减少约50 ms的停止判定延迟。
+        state = self._active_test
+        if state and not state.get("stop_requested"):
+            if state["kind"] == "testDisp":
+                value = abs(self._latest_fz)
+                if value >= state["limit"]:
+                    self._finish_active_test("达到最大力", send_stop=True)
+            else:
+                value = abs(self._latest_tz)
+                if value >= state["limit"]:
+                    self._finish_active_test("达到最大扭矩", send_stop=True)
 
     def _on_worker_error(self, msg):
         self.window.statusBar().showMessage(f"传感器错误: {msg}", 5000)
@@ -321,9 +551,11 @@ class AppController:
         worker.start()
 
     def _update_robot_pose(self, values):
+        self._latest_pose = tuple(float(value) for value in values)
         self.window.update_pose(*values)
 
     def _update_robot_joints(self, values):
+        self._latest_joints = tuple(float(value) for value in values)
         self.window.update_joint_angles(*values)
 
     def _on_robot_connected(self, ip, port):
@@ -338,7 +570,11 @@ class AppController:
             self._on_robot_worker_disconnected()
 
     def _on_robot_worker_disconnected(self):
+        if self._active_test:
+            self._finish_active_test("机械臂连接断开", send_stop=False)
         self.robot_worker = None
+        self._latest_pose = None
+        self._latest_joints = None
         self.window._set_robot_connected(False)
         self.window.set_motion_controls_enabled(False)
         self.window.clear_robot_realtime_display()
@@ -354,12 +590,18 @@ class AppController:
         self._submit_robot("home", 10.0)
 
     def _on_robot_stop(self):
-        self._submit_robot("stop", urgent=True)
+        if self._active_test:
+            self._finish_active_test("用户停止", send_stop=True)
+        else:
+            self._submit_robot("stop", urgent=True)
 
     def _on_robot_enable(self, state):
         self._submit_robot("enable" if state else "disable")
 
     def _on_robot_command_done(self, command):
+        if command == "safe_stop" and self._active_test:
+            reason = self._active_test.get("stop_reason", "停止完成")
+            self._finish_active_test(reason, send_stop=False)
         names = {
             "world_increment": "末端增量运动",
             "world_absolute": "末端目标运动",
@@ -369,17 +611,23 @@ class AppController:
             "disable": "取消使能",
             "home": "回零",
             "stop": "急停",
+            "safe_stop": "试验安全停止",
         }
         self.window.statusBar().showMessage(f"{names.get(command, command)}指令已发送", 3000)
 
     def _on_robot_error(self, message):
+        if self._active_test:
+            self._finish_active_test("机械臂指令失败", send_stop=False)
         self.window.statusBar().showMessage(f"机械臂通信错误: {message}", 8000)
 
     def _shutdown(self):
+        self._sample_timer.stop()
         if self.robot_worker:
             self.robot_worker.stop(wait=True)
         if self.worker:
             self.worker.stop()
+        for exporter in tuple(self._export_workers):
+            exporter.wait(3000)
 
     def run(self):
         return self.app.exec()

@@ -14,8 +14,9 @@ import sys
 from dataclasses import dataclass
 
 from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtUiTools import QUiLoader
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QWidget
 
 from main_window import MainWindow as BaseMainWindow
 
@@ -76,6 +77,10 @@ class PositionMemory:
 EXTRA_STYLE = """
 QGroupBox#robotPoseGroup, QGroupBox#robotJointGroup {
     border-color: #356274;
+}
+QGroupBox#robotJointGroup {
+    margin-top: 12px;
+    padding-top: 4px;
 }
 QPushButton#robotBtnPTP_zengliang,
 QPushButton#robotJointBtnPTP_zengliang {
@@ -144,7 +149,25 @@ class MainWindow(BaseMainWindow):
             splitter.setStretchFactor(0, 0)
             splitter.setStretchFactor(1, 1)
             splitter.setStretchFactor(2, 0)
-            splitter.setSizes([500, 1100, 300])
+            splitter.setSizes([550, 1020, 350])
+
+        self._fullscreen_shortcut = QShortcut(QKeySequence("F11"), self)
+        self._fullscreen_shortcut.activated.connect(self.toggle_fullscreen)
+        self._exit_fullscreen_shortcut = QShortcut(QKeySequence("Escape"), self)
+        self._exit_fullscreen_shortcut.activated.connect(self.exit_fullscreen)
+
+    @Slot()
+    def toggle_fullscreen(self):
+        """F11在全屏与最大化窗口之间切换。"""
+        if self.isFullScreen():
+            self.showMaximized()
+        else:
+            self.showFullScreen()
+
+    @Slot()
+    def exit_fullscreen(self):
+        if self.isFullScreen():
+            self.showMaximized()
 
     def _apply_style(self):
         super()._apply_style()
@@ -229,6 +252,29 @@ class MainWindow(BaseMainWindow):
 
     def _configure_control_geometry(self):
         """统一两行实时值、关节输入单位和四个发送按钮的尺寸。"""
+        connection_group = self._find_child("robotConnGroup")
+        if connection_group:
+            for row_widget in connection_group.findChildren(QWidget, "layoutWidget"):
+                geometry = row_widget.geometry()
+                row_widget.setGeometry(11, geometry.y(), 489, geometry.height())
+
+        ip_edit = self._find_child("robotIpEdit")
+        port_edit = self._find_child("robotPortEdit")
+        if ip_edit:
+            ip_edit.setMinimumWidth(155)
+            ip_edit.setMaximumWidth(175)
+        if port_edit:
+            port_edit.setMinimumWidth(80)
+            port_edit.setMaximumWidth(90)
+        for button_name in ("robotBtnConnect", "robotBtnDisconnect"):
+            button = self._find_child(button_name)
+            if button:
+                button.setMinimumWidth(78)
+
+        joint_group = self._find_child("robotJointGroup")
+        if joint_group and joint_group.layout():
+            joint_group.layout().setContentsMargins(8, 0, 8, 8)
+
         for axis in WORLD_AXES:
             name_label = self._find_child(f"poseLabel_{axis}_2")
             value_label = self._find_child(f"poseValue_{axis}")
@@ -313,6 +359,38 @@ class MainWindow(BaseMainWindow):
             browse_button = self._find_child(browse_name)
             if browse_button:
                 browse_button.setFixedWidth(40)
+
+        # 试验区采用统一列宽，避免全屏及高DPI下标签、单位和输入框错位。
+        for label_name in (
+            "testDispSpeedLabel", "testDispDistLabel", "testForceMaxLabel",
+            "testDispSaveLabel", "testDispNameLabel", "testAngSpeedLabel",
+            "testAngDistLabel", "testTorqueMaxLabel", "testShearSaveLabel",
+            "testShearNameLabel",
+        ):
+            label = self._find_child(label_name)
+            if label:
+                label.setFixedWidth(82)
+
+        for input_name in (
+            "testDispSpeed", "testDispDist", "testForceMax",
+            "testAngSpeed", "testAngDist", "testTorqueMax",
+        ):
+            input_widget = self._find_child(input_name)
+            if input_widget:
+                input_widget.setMinimumWidth(110)
+
+        for unit_name in (
+            "testDispSpeedUnit", "testDispDistUnit", "testForceMaxUnit",
+            "testAngSpeedUnit", "testAngDistUnit", "testTorqueMaxUnit",
+        ):
+            unit = self._find_child(unit_name)
+            if unit:
+                unit.setFixedWidth(48)
+
+        for path_name in ("testDispSavePath", "testShearSavePath"):
+            path_widget = self._find_child(path_name)
+            if path_widget:
+                path_widget.setMinimumWidth(180)
 
         for object_name in (
             "robotBtnPTP_zengliang",

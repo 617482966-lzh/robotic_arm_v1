@@ -100,6 +100,8 @@ class MainWindow(QMainWindow):
     disp_test_start = Signal()                       # 贯入试验启动
     shear_test_start = Signal()                      # 剪切试验启动
     save_data_requested = Signal(str)
+    test_save_requested = Signal(str, str)           # test kind, xlsx path
+    test_reset_requested = Signal(str)               # test kind
     sensor_refresh_requested = Signal()
     plot_disp_show = Signal()
     plot_disp_close = Signal()
@@ -296,7 +298,9 @@ class MainWindow(QMainWindow):
             btn_save = self._find_child(f"{prefix}Save")
             if btn_save: btn_save.clicked.connect(lambda c, p=prefix: self._on_test_save(p))
             btn_reset = self._find_child(f"{prefix}Reset")
-            if btn_reset: btn_reset.clicked.connect(lambda c, p=prefix: print(f"{p} reset clicked"))
+            if btn_reset: btn_reset.clicked.connect(
+                lambda c, p=prefix: self.test_reset_requested.emit(p)
+            )
 
     def _init_state(self):
         for name in ["robotStatusLight", "sensorStatusLight"]:
@@ -353,8 +357,11 @@ class MainWindow(QMainWindow):
         save_dir = path_edit.text() if path_edit else os.path.expanduser("~")
         name = name_edit.text().strip() if name_edit else "01"
         if not name: name = "01"
-        filepath = os.path.join(save_dir, f"{name}.xlsx")
-        self.save_data_requested.emit(filepath)
+        suffix = name.zfill(2) if name.isdigit() else name
+        fixed_prefix = "pen_motor" if prefix == "testDisp" else "cut_motor"
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filepath = os.path.join(save_dir, f"{fixed_prefix}_{timestamp}_{suffix}.xlsx")
+        self.test_save_requested.emit(prefix, filepath)
 
     # ---- UI state ----
     def _set_robot_connected(self, state):
@@ -427,7 +434,7 @@ class MainWindow(QMainWindow):
         return (
             speed.value() if speed else 1.0,
             dist.value() if dist else 10.0,
-            force_max.value() if force_max else 50.0,
+            force_max.value() if force_max else 10.0,
         )
 
     def get_test_params_shear(self):

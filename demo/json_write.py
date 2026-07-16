@@ -512,21 +512,15 @@ class HC1JsonRobot:
 
     @staticmethod
     def tool_x_axis_in_world(u_deg, v_deg, w_deg):
-        """按本机械臂定义计算姿态在世界XZ平面的前向单位向量。
-
-        运动方向只由俯仰角Ry(V)决定：X恒取前向正分量，Z随正Ry向下；
-        U和W不参与方向计算，仅作为保持不变的末端姿态。
-        """
+        """标准Rz·Ry·Rx旋转下，工具坐标系+X轴的世界方向。"""
         ry = math.radians(float(v_deg))
-        vector = (
-            math.cos(ry),
-            0.0,
-            -math.sin(ry),
-        )
-        norm = math.sqrt(sum(value * value for value in vector))
-        if norm <= 1e-12:
-            raise ValueError("当前姿态无法计算有效方向向量")
-        return tuple(value / norm for value in vector)
+        rz = math.radians(float(w_deg))
+        return math.cos(rz) * math.cos(ry), math.sin(rz) * math.cos(ry), -math.sin(ry)
+
+    @staticmethod
+    def penetration_axis_in_world():
+        """贯入试验固定沿世界坐标系Z负方向。"""
+        return 0.0, 0.0, -1.0
 
     def move_along_tool_x(self, distance_mm, speed_mm_s=1.0, show=True):
         """保持U/V/W不变，沿末端当前局部+X方向移动指定空间距离。
@@ -545,9 +539,7 @@ class HC1JsonRobot:
         current = self.read_world_pose()
         if current is None:
             raise RuntimeError("无法读取当前末端世界坐标")
-        direction = self.tool_x_axis_in_world(
-            current["u"], current["v"], current["w"]
-        )
+        direction = self.penetration_axis_in_world()
         delta = tuple(distance * value for value in direction)
         target = (
             current["x"] + delta[0],

@@ -8,20 +8,29 @@
 from __future__ import annotations
 
 import math
+import time
 
 from robot_client.hc1_json import HC1JsonRobot
 
-GLOBAL_SPEED_PERCENT = 5.0
+GLOBAL_SPEED_PERCENT = 10.0
 DEFAULT_INTERPOLATION_FREQUENCY_HZ = 5.0
 MAX_INTERPOLATION_SEGMENTS = 10
-MAX_CALIBRATED_JOINT_SPEED_DEG_S = 10.6374256987
-J1_SPEED_CALIBRATION = (
-    (1.1517574354, 10),
-    (2.3315252973, 20),
-    (3.4269934617, 30),
-    (5.5855354942, 50),
-    (7.6638072551, 70),
-    (10.6374256987, 100),
+MAX_REQUESTED_JOINT_SPEED_DEG_S = 20.0
+# 2026-07-16 实机双向标定：(实测 deg/s, action4.speed 百分比)。
+# 标定条件：全局速度10%，加/减速0.250 s，S比例30%，滤波128 ms。
+JOINT_SPEED_CALIBRATIONS = (
+    ((1.163669, 5), (2.378422, 10), (4.756821, 20), (7.133593, 30),
+     (11.886208, 50), (16.641205, 70), (23.648726, 100)),
+    ((1.307187, 5), (2.671718, 10), (5.343965, 20), (8.014062, 30),
+     (13.353887, 50), (18.684826, 70), (25.741579, 100)),
+    ((1.850862, 5), (3.699920, 10), (7.395409, 20), (11.092476, 30),
+     (18.469153, 50), (25.140991, 70), (32.048416, 100)),
+    ((1.690345, 5), (3.380226, 10), (6.756338, 20), (10.130300, 30),
+     (16.889749, 50), (23.560099, 70), (31.616944, 100)),
+    ((2.996666, 5), (5.991215, 10), (11.962755, 20), (17.732809, 30),
+     (29.118150, 50), (36.659746, 70), (42.918165, 100)),
+    ((2.947982, 5), (5.893505, 10), (11.716466, 20), (17.051939, 30),
+     (27.750129, 50), (34.367871, 70), (38.711236, 100)),
 )
 
 
@@ -44,20 +53,22 @@ class BorunteRobot(HC1JsonRobot):
         return True
 
     def read_realtime_state(self):
-        pose = self.read_world_pose()
-        joints = self.read_joints()
-        if pose is None or joints is None:
+        addresses = [f"world-{i}" for i in range(6)] + [f"axis-{i}" for i in range(6)]
+        reply = self.query(addresses, show=False)
+        values = reply.get("queryData", ()) if isinstance(reply, dict) else ()
+        if len(values) < 12:
             raise RobotError("读取机械臂实时位姿失败")
+        values = tuple(float(value) for value in values[:12])
         return (
-            (pose["x"], pose["y"], pose["z"], pose["u"], pose["v"], pose["w"]),
-            tuple(joints[f"j{i}"] for i in range(1, 7)),
+            values[:6],
+            values[6:12],
         )
 
     def configure_calibrated_speed_control(self):
-        """固定使用标定时的5%全局速度。"""
+        """固定使用逐轴标定时的10%全局速度。"""
         reply = self.set_global_speed(GLOBAL_SPEED_PERCENT)
         if not reply:
-            raise RobotError("设置机械臂全局速度5%失败")
+            raise RobotError("设置机械臂全局速度10%失败")
         return reply
 
     @staticmethod
@@ -99,29 +110,102 @@ class BorunteRobot(HC1JsonRobot):
         )
 
     def move_world_increment(self, increments, speed_mm_s: float):
+        increments = tuple(float(value) for value in increments)
+        if len(increments) != 6:
+            raise ValueError("世界坐标增量必须包含 X/Y/Z/Rx/Ry/Rz 六个值")
+        ck_status = self.joint_mask_from_deltas(increments)
         pose = self.read_world_pose()
         if pose is None:
             raise RobotError("无法读取当前世界坐标")
         current = (pose["x"], pose["y"], pose["z"], pose["u"], pose["v"], pose["w"])
-        target = tuple(a + float(b) for a, b in zip(current, increments))
-        return self.move_world_absolute(target, speed_mm_s)
+        target = tuple(a + b for a, b in zip(current, increments))
+        speed = int(round(float(speed_mm_s)))
+        move = self._build_pose_line_inst(
+            *target, speed_pct=speed, ck_status=ck_status, one_shot=True
+        )
+        move.pop("speed", None)
+        return self.add_rcc(
+            [self._physical_speed_instruction(speed_mm_s), move],
+            empty=True,
+            show=False,
+        )
+
+    def move_along_tool_x(self, distance_mm: float, speed_mm_s: float):
+        """沿当前末端工具X向量运动，世界姿态角保持为启动时的值。
+
+        该接口只向控制器发送一个最终世界坐标目标，便于试验期间用
+        ``stopButton`` 在力阈值或扭矩阈值到达时无报警停止。
+        """
+        distance = float(distance_mm)
+        speed = float(speed_mm_s)
+        if distance == 0:
+            raise ValueError("末端向量运动距离不能为0 mm")
+        if speed <= 0:
+            raise ValueError("末端向量运动速度必须大于0 mm/s")
+        pose = self.read_world_pose()
+        if pose is None:
+            raise RobotError("无法读取末端向量运动起始位姿")
+        start = (pose["x"], pose["y"], pose["z"], pose["u"], pose["v"], pose["w"])
+        direction = self.penetration_axis_in_world()
+        target = (
+            start[0] + distance * direction[0],
+            start[1] + distance * direction[1],
+            start[2] + distance * direction[2],
+            start[3], start[4], start[5],
+        )
+        move = self._build_pose_line_inst(
+            *target, speed_pct=int(round(speed)), ck_status=0x07,
+            one_shot=True, smooth=9,
+        )
+        move.pop("speed", None)
+        reply = self.add_rcc(
+            [self._physical_speed_instruction(speed), move], empty=True, show=False
+        )
+        return {"reply": reply, "start": start, "target": target, "direction": direction}
+
+    @staticmethod
+    def penetration_axis_in_world():
+        """贯入试验固定沿世界坐标系Z负方向运动。"""
+        return 0.0, 0.0, -1.0
 
     @staticmethod
     def tool_x_axis_in_world(rx_deg: float, ry_deg: float, rz_deg: float):
-        """返回本机械臂姿态在世界XZ平面的前向单位向量。
-
-        方向只由Ry决定，约定X为正向、正Ry对应Z负向；Rx/Rz仅保持姿态。
-        """
+        """标准Rz·Ry·Rx旋转下，工具坐标系+X轴的世界方向。"""
         ry = math.radians(float(ry_deg))
-        vector = (
-            math.cos(ry),
-            0.0,
+        rz = math.radians(float(rz_deg))
+        return (
+            math.cos(rz) * math.cos(ry),
+            math.sin(rz) * math.cos(ry),
             -math.sin(ry),
         )
-        norm = math.sqrt(sum(component * component for component in vector))
-        if norm <= 1e-12:
-            raise RobotError("无法根据当前姿态计算末端方向")
-        return tuple(component / norm for component in vector)
+
+    def safe_stop_and_clear(self, timeout: float = 2.0, interval: float = 0.01):
+        """用actionStop立即停止，确认静止后清空远程列表并清除报警。
+
+        实机确认stopButton/actionPause不能中止正在执行的远程action10；
+        actionStop会进入模式3，下一次试验前需在示教器切回自动模式。
+        """
+        deadline = time.monotonic() + float(timeout)
+        stop_reply = self.command(["actionStop"], show=False)
+        state = None
+        while time.monotonic() < deadline:
+            state = self.read_status_pose()
+            if state is not None and not state["isMoving"]:
+                break
+            time.sleep(float(interval))
+        else:
+            raise RobotError(
+                f"actionStop在{timeout:.1f}s内未能确认机械臂停止，回复: {stop_reply}"
+            )
+        clear_reply = self.add_rcc([], empty=True, show=False)
+        button_reply = self.stop_button()
+        alarm_reply = self.clear_alarm()
+        final_state = self.read_status_pose()
+        return {
+            "actionStop": stop_reply, "clear": clear_reply,
+            "stopButton": button_reply, "clearAlarm": alarm_reply,
+            "stopped_state": state, "final_state": final_state,
+        }
 
     @staticmethod
     def _canonical_angle(angle_deg: float) -> float:
@@ -244,21 +328,29 @@ class BorunteRobot(HC1JsonRobot):
         return {"reply": reply, "start": start, "target": target, "direction": direction}
 
     @staticmethod
-    def joint_speed_to_action4_percent(speed_deg_s: float) -> int:
-        """按J1实测表将期望deg/s反插值成action4.speed。"""
+    def joint_speed_to_action4_percent(speed_deg_s: float, ck_status: int) -> float:
+        """按参与运动的关节实测表反插值成安全的action4.speed。"""
         desired = float(speed_deg_s)
-        if not 1 <= desired <= MAX_CALIBRATED_JOINT_SPEED_DEG_S:
+        if not 1 <= desired <= MAX_REQUESTED_JOINT_SPEED_DEG_S:
             raise ValueError(
-                f"关节速度必须在1~{MAX_CALIBRATED_JOINT_SPEED_DEG_S:.2f} deg/s范围内"
+                f"关节速度必须在1~{MAX_REQUESTED_JOINT_SPEED_DEG_S:.0f} deg/s范围内"
             )
-        points = J1_SPEED_CALIBRATION
-        if desired <= points[0][0]:
-            return max(1, round(points[0][1] * desired / points[0][0]))
-        for (v0, p0), (v1, p1) in zip(points, points[1:]):
-            if desired <= v1:
-                raw = p0 + (desired - v0) * (p1 - p0) / (v1 - v0)
-                return max(1, min(100, round(raw)))
-        return 100
+        active_axes = [axis for axis in range(6) if ck_status & (1 << axis)]
+        if not active_axes:
+            raise ValueError("没有检测到需要运动的关节")
+
+        def inverse(points):
+            if desired <= points[0][0]:
+                return points[0][1] * desired / points[0][0]
+            for (v0, p0), (v1, p1) in zip(points, points[1:]):
+                if desired <= v1:
+                    return p0 + (desired - v0) * (p1 - p0) / (v1 - v0)
+            return 100.0
+
+        # action4只有一个公共speed。多轴同时运动时取各轴所需百分比的最小值，
+        # 保证任何活动轴都不会超过用户输入速度；单轴运动则使用该轴专属曲线。
+        raw = min(inverse(JOINT_SPEED_CALIBRATIONS[axis]) for axis in active_axes)
+        return max(0.1, min(100.0, round(raw, 1)))
 
     def move_joints_absolute(self, values, speed_deg_s: float):
         values = tuple(float(v) for v in values)
@@ -271,7 +363,7 @@ class BorunteRobot(HC1JsonRobot):
         ck_status = self.joint_mask_from_deltas(
             tuple(target - actual for target, actual in zip(values, current))
         )
-        speed = self.joint_speed_to_action4_percent(speed_deg_s)
+        speed = self.joint_speed_to_action4_percent(speed_deg_s, ck_status)
         move = self._build_free_path_inst(
             *values, speed_pct=speed, ck_status=ck_status, one_shot=True
         )
@@ -291,7 +383,7 @@ class BorunteRobot(HC1JsonRobot):
         current = tuple(joints[f"j{i}"] for i in range(1, 7))
         target = tuple(a + b for a, b in zip(current, increments))
         ck_status = self.joint_mask_from_deltas(increments)
-        speed = self.joint_speed_to_action4_percent(speed_deg_s)
+        speed = self.joint_speed_to_action4_percent(speed_deg_s, ck_status)
         move = self._build_free_path_inst(
             *target, speed_pct=speed, ck_status=ck_status, one_shot=True
         )
@@ -301,9 +393,9 @@ class BorunteRobot(HC1JsonRobot):
             show=False,
         )
 
-    def home(self, speed_mm_s: float = 10.0):
+    def home(self, speed_deg_s: float = 10.0):
         """按需求以六关节零位作为回零目标。"""
-        return self.move_joints_absolute((0, 0, 0, 0, 0, 0), speed_mm_s)
+        return self.move_joints_absolute((0, 0, 0, 0, 0, 0), speed_deg_s)
 
     def emergency_stop(self):
         """停止当前动作并清除相关报警，避免actionStop切入报警状态。"""

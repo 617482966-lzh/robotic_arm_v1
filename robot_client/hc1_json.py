@@ -210,7 +210,7 @@ class HC1JsonRobot:
             "oneshot": "1" if one_shot else "0",
             "action": "17",
             "ckStatus": f"0x{ck_status:X}",
-            "speed": str(int(speed_pct)),
+            "speed": f"{float(speed_pct):.1f}",
             "tool": str(tool), "coord": str(coord),
             "smooth": str(smooth),
         }
@@ -333,7 +333,7 @@ class HC1JsonRobot:
             "m0": f"{j1:.3f}", "m1": f"{j2:.3f}", "m2": f"{j3:.3f}",
             "m3": f"{j4:.3f}", "m4": f"{j5:.3f}", "m5": f"{j6:.3f}",
             "ckStatus": f"0x{ck_status:X}" if ck_status >= 0 else "0X3F",
-            "speed": str(int(speed_pct)),
+            "speed": f"{float(speed_pct):.1f}",
             "tool": str(tool), "coord": str(coord),
             "smooth": str(smooth),
         }

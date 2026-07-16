@@ -22,13 +22,13 @@
      <widget class="QScrollArea" name="robotScrollArea">
       <property name="minimumSize">
        <size>
-        <width>460</width>
+        <width>530</width>
         <height>0</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
-        <width>520</width>
+        <width>580</width>
         <height>16777215</height>
        </size>
       </property>
@@ -1761,7 +1761,7 @@
               <number>1</number>
              </property>
              <property name="maximum">
-              <number>10</number>
+              <number>20</number>
              </property>
              <property name="pageStep">
               <number>1</number>
@@ -1786,7 +1786,7 @@
               <number>1</number>
              </property>
              <property name="maximum">
-              <number>10</number>
+              <number>20</number>
              </property>
              <property name="value">
               <number>5</number>
@@ -2033,7 +2033,7 @@
               <number>1</number>
              </property>
              <property name="maximum">
-              <number>10</number>
+              <number>20</number>
              </property>
              <property name="pageStep">
               <number>1</number>
@@ -2058,7 +2058,7 @@
               <number>1</number>
              </property>
              <property name="maximum">
-              <number>10</number>
+              <number>20</number>
              </property>
              <property name="value">
               <number>5</number>
@@ -2733,13 +2733,13 @@
      <widget class="QScrollArea" name="sensorScrollArea">
       <property name="minimumSize">
        <size>
-        <width>280</width>
+        <width>330</width>
         <height>0</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
-        <width>320</width>
+        <width>370</width>
         <height>16777215</height>
        </size>
       </property>
@@ -3065,7 +3065,7 @@
                 <double>100.000000000000000</double>
                </property>
                <property name="value">
-                <double>1.000000000000000</double>
+                <double>10.000000000000000</double>
                </property>
               </widget>
              </item>
@@ -3102,13 +3102,13 @@
                 </size>
                </property>
                <property name="minimum">
-                <double>-10.000000000000000</double>
+                <double>-2000.000000000000000</double>
                </property>
                <property name="maximum">
-                <double>10.000000000000000</double>
+                <double>2000.000000000000000</double>
                </property>
                <property name="value">
-                <double>10.000000000000000</double>
+                <double>1000.000000000000000</double>
                </property>
               </widget>
              </item>
@@ -3151,7 +3151,7 @@
                 <double>500.000000000000000</double>
                </property>
                <property name="value">
-                <double>50.000000000000000</double>
+                <double>10.000000000000000</double>
                </property>
               </widget>
              </item>
@@ -3316,13 +3316,13 @@
                 </size>
                </property>
                <property name="minimum">
-                <double>0.100000000000000</double>
+                <double>1.000000000000000</double>
                </property>
                <property name="maximum">
-                <double>360.000000000000000</double>
+                <double>20.000000000000000</double>
                </property>
                <property name="value">
-                <double>5.000000000000000</double>
+                <double>12.000000000000000</double>
                </property>
               </widget>
              </item>
@@ -3365,7 +3365,7 @@
                 <double>360.000000000000000</double>
                </property>
                <property name="value">
-                <double>30.000000000000000</double>
+                <double>180.000000000000000</double>
                </property>
               </widget>
              </item>
@@ -3408,7 +3408,7 @@
                 <double>50.000000000000000</double>
                </property>
                <property name="value">
-                <double>5.000000000000000</double>
+                <double>2.000000000000000</double>
                </property>
               </widget>
              </item>
