@@ -8,13 +8,14 @@
 
 from __future__ import annotations
 
+import json
 import math
 import os
 import sys
 from dataclasses import dataclass
 
-from PySide6.QtCore import Qt, Signal, Slot
-from PySide6.QtGui import QKeySequence, QShortcut
+from PySide6.QtCore import QSettings, Qt, Signal, Slot
+from PySide6.QtGui import QIcon, QKeySequence, QPixmap, QShortcut
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QApplication, QWidget
 
@@ -24,6 +25,11 @@ from main_window import MainWindow as BaseMainWindow
 UI_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     "main_window_2.ui",
+)
+ICON_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "picture",
+    "jlu.png",
 )
 
 WORLD_AXES = ("X", "Y", "Z", "Rx", "Ry", "Rz")
@@ -79,6 +85,10 @@ QGroupBox#robotPoseGroup, QGroupBox#robotJointGroup {
     border-color: #356274;
 }
 QGroupBox#robotJointGroup {
+    margin-top: 12px;
+    padding-top: 4px;
+}
+QGroupBox#sensorConnGroup {
     margin-top: 12px;
     padding-top: 4px;
 }
@@ -140,6 +150,22 @@ class MainWindow(BaseMainWindow):
             raise RuntimeError(f"无法加载 UI 文件: {UI_PATH}")
         self.setCentralWidget(widget)
         self.setWindowTitle("机械臂控制与力传感数据采集系统 - V2")
+        icon = QIcon(ICON_PATH)
+        self.setWindowIcon(icon)
+        app = QApplication.instance()
+        if app:
+            app.setWindowIcon(icon)
+
+        logo_label = self._find_child("jluLogoLabel")
+        if logo_label:
+            logo_label.setPixmap(
+                QPixmap(ICON_PATH).scaled(
+                    150,
+                    150,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
+            )
         self.resize(1920, 1080)
         self.setMinimumSize(1400, 800)
 
@@ -233,6 +259,8 @@ class MainWindow(BaseMainWindow):
         self._memory_slots = {
             1: PositionMemory("joint", (0.0, 16.0, -25.0, 0.0, 9.0, 0.0))
         }
+        self._memory_settings = QSettings("JLU", "RoboticArmV1")
+        self._load_memory_slots()
         super()._init_state()
         self._configure_control_geometry()
         self.update_pose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
@@ -254,9 +282,110 @@ class MainWindow(BaseMainWindow):
         """统一两行实时值、关节输入单位和四个发送按钮的尺寸。"""
         connection_group = self._find_child("robotConnGroup")
         if connection_group:
-            for row_widget in connection_group.findChildren(QWidget, "layoutWidget"):
-                geometry = row_widget.geometry()
-                row_widget.setGeometry(11, geometry.y(), 489, geometry.height())
+            connection_group.setGeometry(4, 4, 511, 108)
+            rows = sorted(
+                connection_group.findChildren(QWidget, "layoutWidget"),
+                key=lambda widget: widget.y(),
+            )
+            if len(rows) >= 2:
+                rows[0].setGeometry(11, 18, 489, 34)
+                rows[1].setGeometry(11, 60, 489, 40)
+
+        # 连接区增高 15 px；末端位姿区采用与关节角区相同的 335 px 节奏。
+        pose_group = self._find_child("robotPoseGroup")
+        joint_group = self._find_child("robotJointGroup")
+        memory_group = self._find_child("robotMemGroup")
+        action_container = self._find_child("robotActionContainer")
+        if pose_group:
+            pose_group.setGeometry(4, 117, 511, 335)
+            current_xyz = self._find_child("poseCurrentRowXYZ")
+            current_rotation = self._find_child("poseCurrentRowRotation")
+            if current_xyz:
+                current_xyz.setGeometry(10, 17, 491, 35)
+            if current_rotation:
+                current_rotation.setGeometry(10, 56, 491, 35)
+
+            # 旧 UI 的多个输入行使用了重复的 layoutWidget 名称。在部分 Qt
+            # 版本中调整固定宽度后会把三列控件归入同一个窄容器。将输入控件
+            # 直接放到 GroupBox，坐标严格复用关节角控制的三列排布。
+            columns = {"X": 0, "Y": 1, "Z": 2,
+                       "Rx": 0, "Ry": 1, "Rz": 2}
+            column_label_x = (9, 175, 340)
+            column_input_x = (41, 207, 372)
+            column_unit_x = (131, 296, 462)
+            row_y = {
+                "zengliang": {"X": 95, "Y": 95, "Z": 95,
+                               "Rx": 134, "Ry": 134, "Rz": 134},
+                "global": {"X": 216, "Y": 216, "Z": 216,
+                            "Rx": 255, "Ry": 255, "Rz": 255},
+            }
+            for suffix in ("zengliang", "global"):
+                for axis in WORLD_AXES:
+                    spin = self._find_child(f"robotTarget{axis}_{suffix}")
+                    label_suffix = "" if suffix == "zengliang" else "_7"
+                    unit_suffix = "" if suffix == "zengliang" else "_3"
+                    axis_label = self._find_child(f"poseLabel_{axis}{label_suffix}")
+                    unit_label = self._find_child(f"poseUnit_{axis}{unit_suffix}")
+                    column = columns[axis]
+                    y = row_y[suffix][axis]
+                    if axis_label:
+                        axis_label.setParent(pose_group)
+                        axis_label.setGeometry(column_label_x[column], y, 28, 35)
+                        axis_label.show()
+                    if spin:
+                        spin.setParent(pose_group)
+                        spin.setGeometry(column_input_x[column], y + 3, 86, 29)
+                        spin.show()
+                    if unit_label:
+                        unit_label.setParent(pose_group)
+                        unit_label.setGeometry(column_unit_x[column], y, 40, 35)
+                        unit_label.show()
+
+                speed_y = 173 if suffix == "zengliang" else 294
+                speed_label_name = "speedLabel" if suffix == "zengliang" else "speedLabel_3"
+                speed_label = self._find_child(speed_label_name)
+                speed_slider = self._find_child(f"robotSpeedSlider_{suffix}")
+                speed_spin = self._find_child(f"robotSpeedSpin_{suffix}")
+                for widget, geometry in (
+                    (speed_label, (9, speed_y, 180, 32)),
+                    (speed_slider, (193, speed_y + 6, 128, 20)),
+                    (speed_spin, (325, speed_y + 1, 77, 29)),
+                ):
+                    if widget:
+                        widget.setParent(pose_group)
+                        widget.setGeometry(*geometry)
+                        widget.show()
+                if speed_slider:
+                    speed_slider.setFixedSize(128, 20)
+                if speed_spin:
+                    speed_spin.setFixedSize(77, 29)
+                send_button = self._find_child(f"robotBtnPTP_{suffix}")
+                if send_button:
+                    send_button.setGeometry(406, speed_y, 96, 32)
+
+            # 隐藏已经清空的旧绝对定位容器，实时显示的两个容器继续保留。
+            for child in pose_group.findChildren(
+                QWidget, options=Qt.FindChildOption.FindDirectChildrenOnly
+            ):
+                if child.objectName() not in (
+                    "poseCurrentRowXYZ", "poseCurrentRowRotation"
+                ) and child.layout() is not None:
+                    child.hide()
+
+        if joint_group:
+            joint_group.setGeometry(4, 457, 511, 335)
+        if memory_group:
+            memory_group.setGeometry(4, 797, 511, 270)
+        if action_container:
+            action_container.setGeometry(10, 1072, 495, 46)
+        scroll_widget = self._find_child("robotScrollWidget")
+        if scroll_widget:
+            scroll_widget.setMinimumHeight(1125)
+
+        sensor_connection_group = self._find_child("sensorConnGroup")
+        if sensor_connection_group and sensor_connection_group.layout():
+            sensor_connection_group.layout().setContentsMargins(9, 0, 9, 9)
+            sensor_connection_group.layout().setSpacing(4)
 
         ip_edit = self._find_child("robotIpEdit")
         port_edit = self._find_child("robotPortEdit")
@@ -269,11 +398,26 @@ class MainWindow(BaseMainWindow):
         for button_name in ("robotBtnConnect", "robotBtnDisconnect"):
             button = self._find_child(button_name)
             if button:
-                button.setMinimumWidth(78)
+                button.setFixedWidth(100)
+                button.setFixedHeight(32)
+        status_label = self._find_child("robotStatusLabel")
+        if status_label:
+            status_label.setFixedWidth(52)
+
+        for axis in WORLD_AXES:
+            for suffix in ("zengliang", "global"):
+                input_widget = self._find_child(f"robotTarget{axis}_{suffix}")
+                if input_widget:
+                    input_widget.setFixedWidth(86)
 
         joint_group = self._find_child("robotJointGroup")
         if joint_group and joint_group.layout():
             joint_group.layout().setContentsMargins(8, 0, 8, 8)
+
+        for button_name in ("robotBtnEnable", "robotBtnHome", "robotBtnStop"):
+            button = self._find_child(button_name)
+            if button:
+                button.setFixedHeight(36)
 
         for axis in WORLD_AXES:
             name_label = self._find_child(f"poseLabel_{axis}_2")
@@ -337,7 +481,7 @@ class MainWindow(BaseMainWindow):
         for speed_label_name in ("speedLabel", "speedLabel_3"):
             speed_label = self._find_child(speed_label_name)
             if speed_label:
-                speed_label.setFixedWidth(140)
+                speed_label.setFixedWidth(180)
 
         memory_type_label = self._find_child("memoryTypeLabel")
         memory_type_hint = self._find_child("memoryTypeHint")
@@ -348,12 +492,12 @@ class MainWindow(BaseMainWindow):
 
         for index in range(1, 6):
             value_label = self._find_child(f"memVal_{index}")
-            clear_button = self._find_child(f"memClear_{index}")
             if value_label:
                 value_label.setMinimumWidth(180)
-            if clear_button:
-                clear_button.setText("清除")
-                clear_button.setFixedWidth(52)
+            for prefix in ("memSave", "memRecall", "memClear"):
+                button = self._find_child(f"{prefix}_{index}")
+                if button:
+                    button.setFixedSize(64, 32)
 
         for browse_name in ("testDispSaveBrowse", "testShearSaveBrowse"):
             browse_button = self._find_child(browse_name)
@@ -567,6 +711,7 @@ class MainWindow(BaseMainWindow):
         coordinate_type = self.get_memory_coordinate_type()
         values = self._current_joints if coordinate_type == "joint" else self._current_pose
         self._memory_slots[index] = PositionMemory(coordinate_type, values)
+        self._save_memory_slots()
         self._refresh_memory_label(index)
         description = "关节角" if coordinate_type == "joint" else "世界坐标"
         self.statusBar().showMessage(f"P{index} 已保存{description}", 2500)
@@ -594,8 +739,49 @@ class MainWindow(BaseMainWindow):
 
     def _clear_memory_slot(self, index):
         self._memory_slots.pop(index, None)
+        self._save_memory_slots()
         self._refresh_memory_label(index)
         self.statusBar().showMessage(f"P{index} 已清除", 2500)
+
+    def _load_memory_slots(self):
+        """从本机设置恢复 P1-P5；数据异常时保留 P1 的出厂默认值。"""
+        raw = self._memory_settings.value("position_memory/slots", "")
+        if not raw:
+            return
+        try:
+            saved = json.loads(str(raw))
+            restored = {}
+            for slot_text, item in saved.items():
+                slot = int(slot_text)
+                coordinate_type = str(item["coordinate_type"])
+                values = tuple(float(value) for value in item["values"])
+                if slot not in range(1, 6):
+                    continue
+                if coordinate_type not in ("joint", "world") or len(values) != 6:
+                    continue
+                self._ensure_finite(values, "位置记忆")
+                restored[slot] = PositionMemory(coordinate_type, values)
+            self._memory_slots = restored
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+            return
+
+    def _save_memory_slots(self):
+        payload = {
+            str(slot): {
+                "coordinate_type": memory.coordinate_type,
+                "values": list(memory.values),
+            }
+            for slot, memory in sorted(self._memory_slots.items())
+        }
+        self._memory_settings.setValue(
+            "position_memory/slots",
+            json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
+        )
+        self._memory_settings.sync()
+
+    def closeEvent(self, event):
+        self._save_memory_slots()
+        super().closeEvent(event)
 
     def get_robot_speed(self):
         """兼容旧调用；第二版默认返回末端绝对运动速度。"""

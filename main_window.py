@@ -7,7 +7,7 @@ from datetime import datetime
 from PySide6.QtWidgets import (
     QMainWindow, QApplication, QWidget, QFileDialog,
 )
-from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtCore import QStandardPaths, Qt, Signal, Slot
 from PySide6.QtUiTools import QUiLoader
 
 import matplotlib
@@ -40,6 +40,8 @@ QPushButton#saveBtnSave { background-color: #1a5a5a; border-color: #14a3a8; min-
 QPushButton#saveBtnSave:hover { background-color: #1a7a7a; }
 QPushButton#robotBtnEnable { background-color: #1a5a3c; border-color: #28a745; min-height: 34px; font-size: 14px; font-weight: bold; }
 QPushButton#robotBtnEnable:checked { background-color: #28a745; }
+QPushButton#robotBtnHome { background-color: #806a12; border-color: #ffc107; color: #fff7cc; font-size: 14px; font-weight: bold; }
+QPushButton#robotBtnHome:hover { background-color: #a38716; }
 QPushButton#testDispStart { background-color: #1a5a5a; border-color: #14a3a8; font-weight: bold; }
 QPushButton#testDispStart:hover { background-color: #1a7a7a; }
 QPushButton#testShearStart { background-color: #5a3a1a; border-color: #e67e22; font-weight: bold; }
@@ -307,9 +309,12 @@ class MainWindow(QMainWindow):
             w = self._find_child(name)
             if w: w.setStyleSheet(LIGHT_OFF)
         # Init test save paths
+        desktop_path = QStandardPaths.writableLocation(
+            QStandardPaths.StandardLocation.DesktopLocation
+        ) or os.path.join(os.path.expanduser("~"), "Desktop")
         for prefix in ["testDisp", "testShear"]:
             sp = self._find_child(f"{prefix}SavePath")
-            if sp: sp.setText(os.path.expanduser("~") + "\\Documents")
+            if sp: sp.setText(desktop_path)
 
     # ---- Connection callbacks ----
     def _on_robot_connect(self):
