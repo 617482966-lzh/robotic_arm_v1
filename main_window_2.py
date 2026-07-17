@@ -19,7 +19,7 @@ from PySide6.QtGui import QIcon, QKeySequence, QPixmap, QShortcut
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QApplication, QWidget
 
-from main_window import MainWindow as BaseMainWindow
+from main_window import DARK_STYLE, MainWindow as BaseMainWindow
 
 
 UI_PATH = os.path.join(
@@ -132,6 +132,48 @@ QWidget#robotActionContainer {
 }
 """
 
+LIGHT_STYLE = """
+QMainWindow, QWidget { background-color: #eef2f6; color: #263442; font-size: 13px; }
+QGroupBox { background-color: #f8fafc; color: #263442; border: 1px solid #aebdca; border-radius: 5px; margin-top: 16px; padding-top: 18px; font-weight: bold; font-size: 13px; }
+QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 8px; color: #087f8c; }
+QLabel { color: #334454; background: transparent; }
+QPushButton { background-color: #e1e8ef; color: #263442; border: 1px solid #aebdca; border-radius: 4px; padding: 5px 14px; min-height: 26px; font-size: 13px; }
+QPushButton:hover { background-color: #d2e4ea; border-color: #0796a3; }
+QPushButton:pressed { background-color: #0796a3; color: white; }
+QPushButton:disabled { background-color: #edf1f4; color: #9aa7b2; border-color: #d2dae1; }
+QLineEdit, QDoubleSpinBox, QSpinBox, QComboBox { background-color: #ffffff; color: #1e2b36; border: 1px solid #aebdca; border-radius: 4px; padding: 4px 6px; }
+QLineEdit:focus, QDoubleSpinBox:focus, QSpinBox:focus, QComboBox:hover { border-color: #0796a3; }
+QComboBox QAbstractItemView { background-color: #ffffff; color: #263442; selection-background-color: #0796a3; selection-color: white; }
+QSlider::groove:horizontal { background: #cbd5df; height: 6px; border-radius: 3px; }
+QSlider::handle:horizontal { background: #0796a3; width: 16px; margin: -5px 0; border-radius: 8px; }
+QSlider::sub-page:horizontal { background: #0796a3; border-radius: 3px; }
+QScrollArea { border: none; background: transparent; }
+QScrollBar:vertical { background: #e4eaf0; width: 8px; border-radius: 4px; }
+QScrollBar::handle:vertical { background: #aebdca; border-radius: 4px; min-height: 30px; }
+QSplitter::handle { background: #c4ced8; width: 3px; }
+QFrame#plotPlaceholder1, QFrame#plotPlaceholder2 { background-color: #ffffff; border: 1px solid #b7c4cf; }
+QPushButton#robotBtnConnect, QPushButton#sensorBtnConnect { background-color: #218c4e; border-color: #18723e; color: white; }
+QPushButton#robotBtnDisconnect, QPushButton#sensorBtnDisconnect { background-color: #b64242; border-color: #962f2f; color: white; }
+QPushButton#robotBtnEnable { background-color: #278b58; border-color: #187443; color: white; font-weight: bold; }
+QPushButton#robotBtnHome { background-color: #d6a514; border-color: #a87e00; color: #302600; font-weight: bold; }
+QPushButton#robotBtnStop { background-color: #bd3434; border-color: #962424; color: white; font-weight: bold; }
+QPushButton#sensorBtnZeroAll { background-color: #d6a514; border-color: #a87e00; color: #302600; font-weight: bold; }
+QPushButton#robotBtnPTP_zengliang, QPushButton#robotJointBtnPTP_zengliang { background-color: #148c91; border-color: #08767b; color: white; font-weight: bold; }
+QPushButton#robotBtnPTP_global, QPushButton#robotJointBtnPTP_global { background-color: #4676ae; border-color: #315e91; color: white; font-weight: bold; }
+QPushButton#testDispStart { background-color: #148c91; border-color: #08767b; color: white; font-weight: bold; }
+QPushButton#testShearStart { background-color: #c87116; border-color: #a85a0a; color: white; font-weight: bold; }
+QPushButton#appExitBtn { background-color: #b64242; border-color: #962f2f; color: white; font-weight: bold; }
+QPushButton#themeToggleBtn { background-color: #526579; border-color: #3e5062; color: white; font-weight: bold; }
+QLabel#poseValue_X, QLabel#poseValue_Y, QLabel#poseValue_Z,
+QLabel#poseValue_Rx, QLabel#poseValue_Ry, QLabel#poseValue_Rz,
+QLabel#jointValue_J1, QLabel#jointValue_J2, QLabel#jointValue_J3,
+QLabel#jointValue_J4, QLabel#jointValue_J5, QLabel#jointValue_J6 { color: #087f8c; font-family: Consolas, "Microsoft YaHei"; font-weight: bold; }
+QGroupBox#robotPoseGroup, QGroupBox#robotJointGroup { border-color: #6f9eaa; }
+QGroupBox#robotJointGroup, QGroupBox#sensorConnGroup { margin-top: 12px; padding-top: 4px; }
+QFrame#jointSectionLine { color: #bdc8d2; background-color: #bdc8d2; max-height: 1px; }
+QWidget#robotActionContainer { background: transparent; }
+"""
+
 
 class MainWindow(BaseMainWindow):
     """加载 ``main_window_2.ui`` 的第二版主窗口。"""
@@ -142,6 +184,10 @@ class MainWindow(BaseMainWindow):
     joint_absolute_requested = Signal(object)   # JointMoveRequest
     memory_type_changed = Signal(str)
     memory_recall_requested = Signal(int, object)  # PositionMemory
+
+    def __init__(self):
+        self._dark_theme = True
+        super().__init__()
 
     def _setup_ui_from_file(self):
         loader = QUiLoader()
@@ -196,13 +242,66 @@ class MainWindow(BaseMainWindow):
             self.showMaximized()
 
     def _apply_style(self):
-        super()._apply_style()
-        self.setStyleSheet(self.styleSheet() + EXTRA_STYLE)
+        self.setStyleSheet(DARK_STYLE + EXTRA_STYLE)
+
+    def _apply_plot_theme(self):
+        if not hasattr(self, "ax1"):
+            return
+        colors = (
+            {
+                "figure": "#1c1c2e", "axes": "#12122a", "text": "#c8ccd4",
+                "muted": "#a0a4b0", "grid": "#3a3a52", "legend": "#1c1c2e",
+            }
+            if self._dark_theme else
+            {
+                "figure": "#eef2f6", "axes": "#ffffff", "text": "#263442",
+                "muted": "#526474", "grid": "#c6d0da", "legend": "#f8fafc",
+            }
+        )
+        for figure, axes, canvas in (
+            (self.figure1, self.ax1, self.canvas1),
+            (self.figure2, self.ax2, self.canvas2),
+        ):
+            figure.set_facecolor(colors["figure"])
+            axes.set_facecolor(colors["axes"])
+            axes.title.set_color(colors["text"])
+            axes.xaxis.label.set_color(colors["muted"])
+            axes.yaxis.label.set_color(colors["muted"])
+            axes.tick_params(colors=colors["muted"])
+            axes.grid(True, alpha=0.35, color=colors["grid"])
+            for spine in axes.spines.values():
+                spine.set_color(colors["grid"])
+            legend = axes.get_legend()
+            if legend:
+                legend.get_frame().set_facecolor(colors["legend"])
+                legend.get_frame().set_edgecolor(colors["grid"])
+                for text in legend.get_texts():
+                    text.set_color(colors["text"])
+            canvas.setStyleSheet(f"background-color:{colors['figure']};")
+            canvas.draw_idle()
+
+    @Slot()
+    def toggle_theme(self):
+        self._dark_theme = not self._dark_theme
+        self.setStyleSheet(
+            DARK_STYLE + EXTRA_STYLE if self._dark_theme else LIGHT_STYLE
+        )
+        button = self._find_child("themeToggleBtn")
+        if button:
+            button.setText("明亮主题" if self._dark_theme else "暗色主题")
+        self._apply_plot_theme()
 
     def _connect_signals(self):
         # 复用连接、传感器、位置记忆、使能/回零/急停、试验和图表绑定。
         # 基类查找不到旧版 Jog/PTP 控件时会安全跳过。
         super()._connect_signals()
+
+        theme_button = self._find_child("themeToggleBtn")
+        if theme_button:
+            theme_button.clicked.connect(self.toggle_theme)
+        exit_button = self._find_child("appExitBtn")
+        if exit_button:
+            exit_button.clicked.connect(self.close)
 
         self._bind_speed_pair(
             "robotSpeedSlider_zengliang",

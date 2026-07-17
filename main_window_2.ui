@@ -3534,6 +3534,49 @@
           </property>
          </spacer>
         </item>
+        <item>
+         <layout class="QHBoxLayout" name="appControlRow">
+          <item>
+           <spacer name="appControlSpacer">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="themeToggleBtn">
+            <property name="minimumSize">
+             <size>
+              <width>92</width>
+              <height>32</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>明亮主题</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="appExitBtn">
+            <property name="minimumSize">
+             <size>
+              <width>72</width>
+              <height>32</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>退出</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
        </layout>
       </widget>
      </widget>
