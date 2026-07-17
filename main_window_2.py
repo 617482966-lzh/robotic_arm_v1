@@ -347,21 +347,23 @@ class MainWindow(BaseMainWindow):
                 speed_slider = self._find_child(f"robotSpeedSlider_{suffix}")
                 speed_spin = self._find_child(f"robotSpeedSpin_{suffix}")
                 for widget, geometry in (
-                    (speed_label, (9, speed_y, 180, 32)),
-                    (speed_slider, (193, speed_y + 6, 128, 20)),
-                    (speed_spin, (325, speed_y + 1, 77, 29)),
+                    (speed_label, (9, speed_y, 130, 32)),
+                    (speed_slider, (143, speed_y + 6, 158, 20)),
+                    (speed_spin, (305, speed_y + 1, 77, 29)),
                 ):
                     if widget:
                         widget.setParent(pose_group)
                         widget.setGeometry(*geometry)
                         widget.show()
                 if speed_slider:
-                    speed_slider.setFixedSize(128, 20)
+                    speed_slider.setFixedSize(158, 20)
                 if speed_spin:
                     speed_spin.setFixedSize(77, 29)
                 send_button = self._find_child(f"robotBtnPTP_{suffix}")
                 if send_button:
-                    send_button.setGeometry(406, speed_y, 96, 32)
+                    send_button.setParent(pose_group)
+                    send_button.setGeometry(386, speed_y, 116, 32)
+                    send_button.show()
 
             # 隐藏已经清空的旧绝对定位容器，实时显示的两个容器继续保留。
             for child in pose_group.findChildren(
@@ -476,12 +478,12 @@ class MainWindow(BaseMainWindow):
         ):
             speed_label = self._find_child(speed_label_name)
             if speed_label:
-                speed_label.setFixedWidth(180)
+                speed_label.setFixedWidth(130)
 
         for speed_label_name in ("speedLabel", "speedLabel_3"):
             speed_label = self._find_child(speed_label_name)
             if speed_label:
-                speed_label.setFixedWidth(180)
+                speed_label.setFixedWidth(130)
 
         memory_type_label = self._find_child("memoryTypeLabel")
         memory_type_hint = self._find_child("memoryTypeHint")
@@ -544,7 +546,7 @@ class MainWindow(BaseMainWindow):
         ):
             button = self._find_child(object_name)
             if button:
-                button.setFixedSize(96, 32)
+                button.setFixedSize(116, 32)
 
     @staticmethod
     def _ensure_finite(values, description):

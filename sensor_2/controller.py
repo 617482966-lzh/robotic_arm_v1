@@ -18,7 +18,7 @@ class SensorController:
             if -10000 <= pulling_pressure_raw <= 10000 and -1000 <= torque_raw <= 1000:
                 pulling_pressure = round(pulling_pressure_raw * 0.005, 2)
                 torque = round(torque_raw * 0.005, 2)
-                print(f"拉压力: {pulling_pressure}, 扭矩: {torque}")
+                # print(f"拉压力: {pulling_pressure}, 扭矩: {torque}")
                 return pulling_pressure, torque
             else:
                 print(f"数据异常: 拉压力原始值={pulling_pressure_raw}, 扭矩原始值={torque_raw}")
