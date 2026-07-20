@@ -16,6 +16,7 @@ import socket
 import json
 import time
 import threading
+import logging
 
 # 默认连接参数
 HOST = "192.168.1.4"
@@ -23,6 +24,9 @@ PORT = 9760
 
 DSID_MONITOR = "www.hc-system.com.RemoteMonitor"
 DSID_COMMAND = "www.hc-system.com.HCRemoteCommand"
+
+_LOG = logging.getLogger(__name__)
+_MAX_REPLY_BYTES = 1024 * 1024
 
 class HC1JsonRobot:
     """HC1 机器人 JSON 远程控制客户端"""
@@ -32,26 +36,47 @@ class HC1JsonRobot:
         self.port = port
         self.sock = None
         self.pack_id = 8000
-        self._lock = threading.Lock()
+        # One HC1 connection is strictly request/reply.  Serialize the whole
+        # exchange so polling and control threads cannot consume each other's
+        # replies.
+        self._lock = threading.RLock()
+        self._pack_lock = threading.Lock()
+        self._recv_buffer = b""
 
     # ---- 连接管理 ----
 
-    def connect(self):
+    def connect(self, timeout=3.0):
         """建立 TCP 连接"""
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.settimeout(3.0)
-        self.sock.connect((self.host, self.port))
-        print(f"[OK] 已连接 {self.host}:{self.port}")
+        with self._lock:
+            self.disconnect()
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+            sock.settimeout(float(timeout))
+            try:
+                sock.connect((self.host, self.port))
+            except Exception:
+                sock.close()
+                raise
+            self.sock = sock
+            self._recv_buffer = b""
+            _LOG.info("已连接 %s:%s", self.host, self.port)
 
     def disconnect(self):
         """关闭 TCP 连接"""
-        if self.sock:
-            try:
-                self.sock.close()
-            except Exception:
-                pass
-            self.sock = None
-            print("[OK] 已断开连接")
+        with self._lock:
+            sock, self.sock = self.sock, None
+            self._recv_buffer = b""
+            if sock:
+                try:
+                    sock.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
+                try:
+                    sock.close()
+                except OSError:
+                    pass
+                _LOG.info("已断开连接")
 
     def is_connected(self):
         return self.sock is not None
@@ -59,40 +84,65 @@ class HC1JsonRobot:
     # ---- 底层通信 ----
 
     def _next_pack_id(self):
-        self.pack_id += 1
-        return str(self.pack_id)
+        with self._pack_lock:
+            self.pack_id += 1
+            return str(self.pack_id)
 
     def _recv_json(self, timeout=3.0):
         """接收并解析 JSON 回复"""
+        if self.sock is None:
+            raise ConnectionError("机械臂尚未连接")
         self.sock.settimeout(timeout)
-        data = b""
         while True:
+            # The controller terminates frames with CRLF.  Keeping overflow in
+            # a persistent buffer also makes coalesced TCP replies safe.
+            while b"\n" in self._recv_buffer:
+                line, self._recv_buffer = self._recv_buffer.split(b"\n", 1)
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    return json.loads(line.decode("utf-8"))
+                except (UnicodeDecodeError, json.JSONDecodeError):
+                    _LOG.warning("忽略无法解析的机械臂 JSON 帧（%d 字节）", len(line))
             try:
                 chunk = self.sock.recv(4096)
                 if not chunk:
-                    break
-                data += chunk
-                text = data.decode("utf-8", errors="ignore").strip()
+                    raise ConnectionError("机械臂已关闭 TCP 连接")
+                self._recv_buffer += chunk
+                if len(self._recv_buffer) > _MAX_REPLY_BYTES:
+                    self._recv_buffer = b""
+                    raise ValueError("机械臂 JSON 回复超过 1 MiB")
+                # Some firmware versions omit the newline.  Accept a complete
+                # JSON value, but never discard a partial value on timeout.
                 try:
-                    return json.loads(text)
-                except json.JSONDecodeError:
-                    continue
+                    text = self._recv_buffer.decode("utf-8").strip()
+                    reply = json.loads(text)
+                except (UnicodeDecodeError, json.JSONDecodeError):
+                    pass
+                else:
+                    self._recv_buffer = b""
+                    return reply
             except socket.timeout:
-                break
-        if data:
-            print("[WARN] 收到数据但无法解析 JSON:")
-            print(data.decode("utf-8", errors="ignore"))
-        return None
+                _LOG.debug("等待机械臂 JSON 回复超时")
+                return None
 
     def _send_json(self, req, show=False, timeout=3.0):
         """发送 JSON 请求并接收回复"""
         with self._lock:
+            if self.sock is None:
+                raise ConnectionError("机械臂尚未连接")
             raw = json.dumps(req, ensure_ascii=False) + "\r\n"
             if show:
                 print(">>> SEND")
                 print(json.dumps(req, ensure_ascii=False, indent=2))
-            self.sock.sendall(raw.encode("utf-8"))
-            rep = self._recv_json(timeout=timeout)
+            try:
+                self.sock.sendall(raw.encode("utf-8"))
+                rep = self._recv_json(timeout=timeout)
+            except (OSError, ValueError):
+                # Do not leave a dead descriptor looking connected to the UI.
+                self.disconnect()
+                raise
             if show:
                 print("<<< RECV")
                 print(rep)
@@ -128,8 +178,8 @@ class HC1JsonRobot:
                 "j1": float(q[0]), "j2": float(q[1]), "j3": float(q[2]),
                 "j4": float(q[3]), "j5": float(q[4]), "j6": float(q[5]),
             }
-        except Exception as e:
-            print(f"[FAIL] 关节角解析失败: {e}")
+        except (TypeError, ValueError) as e:
+            _LOG.warning("关节角解析失败: %s", e)
             return None
 
     def read_world_pose(self):
@@ -148,8 +198,8 @@ class HC1JsonRobot:
                 "x": float(q[0]), "y": float(q[1]), "z": float(q[2]),
                 "u": float(q[3]), "v": float(q[4]), "w": float(q[5]),
             }
-        except Exception as e:
-            print(f"[FAIL] 世界坐标解析失败: {e}")
+        except (TypeError, ValueError) as e:
+            _LOG.warning("世界坐标解析失败: %s", e)
             return None
 
     def read_status_pose(self):
@@ -172,8 +222,8 @@ class HC1JsonRobot:
                 "x": float(q[3]), "y": float(q[4]), "z": float(q[5]),
                 "u": float(q[6]), "v": float(q[7]), "w": float(q[8]),
             }
-        except Exception as e:
-            print(f"[FAIL] 状态解析失败: {e}")
+        except (TypeError, ValueError) as e:
+            _LOG.warning("状态解析失败: %s", e)
             return None
 
     # ---- Command: 控制命令 ----
@@ -393,7 +443,7 @@ class HC1JsonRobot:
         """
         cur = self.read_joints()
         if cur is None:
-            print("[FAIL] 无法读取当前关节角, 增量运动取消")
+            _LOG.warning("无法读取当前关节角，增量运动取消")
             return False
         target = {
             "j1": cur["j1"] + dj1, "j2": cur["j2"] + dj2,
@@ -404,7 +454,7 @@ class HC1JsonRobot:
             ck_status = self.joint_mask_from_deltas(
                 (dj1, dj2, dj3, dj4, dj5, dj6)
             )
-        print(f"自由路径增量: "
+        _LOG.debug(f"自由路径增量: "
               f"J1 {cur['j1']:.3f}->{target['j1']:.3f}  "
               f"J2 {cur['j2']:.3f}->{target['j2']:.3f}  "
               f"J3 {cur['j3']:.3f}->{target['j3']:.3f}  "
@@ -498,13 +548,13 @@ class HC1JsonRobot:
         """
         cur = self.read_world_pose()
         if cur is None:
-            print("[FAIL] 无法读取当前世界坐标, 增量运动取消")
+            _LOG.warning("无法读取当前世界坐标，增量运动取消")
             return False
         target = {
             "x": cur["x"] + dx, "y": cur["y"] + dy, "z": cur["z"] + dz,
             "u": cur["u"] + du, "v": cur["v"] + dv, "w": cur["w"] + dw,
         }
-        print(f"姿势直线增量: "
+        _LOG.debug(f"姿势直线增量: "
               f"X {cur['x']:.3f}->{target['x']:.3f}  "
               f"Y {cur['y']:.3f}->{target['y']:.3f}  "
               f"Z {cur['z']:.3f}->{target['z']:.3f}  "
@@ -532,13 +582,13 @@ class HC1JsonRobot:
 
     def wait_for_idle(self, timeout=30.0, interval=0.2):
         """等待机器人停止运动"""
-        t0 = time.time()
-        while time.time() - t0 < timeout:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
             status = self.read_status_pose()
             if status and status["isMoving"] == 0:
                 return True
             time.sleep(interval)
-        print("[WARN] 等待超时")
+        _LOG.warning("等待机械臂停止超时")
         return False
 
     def check_alarm(self):

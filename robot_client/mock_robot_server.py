@@ -9,6 +9,9 @@ import socket
 import threading
 import time
 import math
+import logging
+
+_LOG = logging.getLogger(__name__)
 
 
 class MockRobot:
@@ -25,6 +28,7 @@ class MockRobot:
         self.speed_pct = 500  # 50.0%
         self._motion_thread = None
         self._lock = threading.Lock()
+        self._motion_id = 0
 
     def handle_frame(self, frame: dict) -> dict | None:
         """Process one JSON frame, return response or None."""
@@ -74,14 +78,14 @@ class MockRobot:
             # World coordinates
             if addr.startswith("world-"):
                 idx = int(addr.split("-")[1])
-                if 0 <= idx < 8:
+                if 0 <= idx < len(self.world):
                     return f"{self.world[idx]:.3f}"
                 return "0.000"
 
             # Joint positions
             if addr.startswith("axis-"):
                 idx = int(addr.split("-")[1])
-                if 0 <= idx < 8:
+                if 0 <= idx < len(self.joints):
                     return f"{self.joints[idx]:.3f}"
                 return "0.000"
 
@@ -144,12 +148,14 @@ class MockRobot:
         reply = ["ok"]
         with self._lock:
             if cmd == "actionStop":
+                self._motion_id += 1
                 self.moving = False
                 self.mode = "3"
+            elif cmd in ("stopButton", "actionPause"):
+                self._motion_id += 1
+                self.moving = False
             elif cmd == "startButton":
                 self.mode = "7"
-            elif cmd == "actionPause":
-                self.moving = False
             elif cmd == "actionSingleCycle":
                 self.mode = "9"
             elif cmd == "modifyGSPD" and len(cmd_data) > 1:
@@ -184,20 +190,29 @@ class MockRobot:
         for inst in instructions:
             action = inst.get("action", "")
             if action == "51":
-                use_abs_speed = True
-                abs_speed_mm_s = float(inst.get("speed", "10"))
+                use_abs_speed = str(inst.get("isUse", "1")) == "1"
+                if use_abs_speed:
+                    abs_speed_mm_s = max(0.001, float(inst.get("speed", "10")))
             elif action in ("4", "10", "17"):
-                m = [float(inst.get(f"m{i}", "0")) for i in range(6)]
+                suffix = "_p" if action == "17" else ""
+                m = [float(inst.get(f"m{i}{suffix}", inst.get(f"m{i}", "0")))
+                     for i in range(6)]
                 ck_text = str(inst.get("ckStatus", "63"))
                 ck = int(ck_text, 0)
                 targets.append((action, m, ck, use_abs_speed, abs_speed_mm_s))
 
         if targets:
             # Take the last motion target
-            _, m, ck, use_spd, spd = targets[-1]
+            action, m, ck, use_spd, spd = targets[-1]
             # Start animation in background
-            threading.Thread(target=self._animate_motion,
-                             args=(m, ck, use_spd, spd), daemon=True).start()
+            with self._lock:
+                self._motion_id += 1
+                motion_id = self._motion_id
+            self._motion_thread = threading.Thread(
+                target=self._animate_motion,
+                args=(action, m, ck, use_spd, spd, motion_id), daemon=True,
+            )
+            self._motion_thread.start()
 
         return {
             "dsID": frame.get("dsID", "HCRemoteCommand"),
@@ -206,11 +221,12 @@ class MockRobot:
             "cmdReply": ["AddRCC", "ok"],
         }
 
-    def _animate_motion(self, target: list[float], ck: int,
-                        use_abs_speed: bool, abs_speed: float):
+    def _animate_motion(self, action: str, target: list[float], ck: int,
+                        use_abs_speed: bool, abs_speed: float, motion_id: int):
         """Simulate motion from current position to target."""
         with self._lock:
-            start = self.world.copy()
+            positions = self.joints if action == "4" else self.world
+            start = positions.copy()
             self.moving = True
 
         # Determine which axes move (ck bitmask, bit1~bit8)
@@ -239,18 +255,23 @@ class MockRobot:
         for step in range(1, steps + 1):
             t = step / steps
             with self._lock:
+                if motion_id != self._motion_id:
+                    return
                 for i in range(6):
                     if active[i]:
-                        self.world[i] = start[i] + (target[i] - start[i]) * t
-                        # Rough IK → joint approximation for display
-                        self.joints[i] = self.world[i] * 0.1
+                        positions[i] = start[i] + (target[i] - start[i]) * t
+                        if action != "4":
+                            # Rough IK -> joint approximation for display.
+                            self.joints[i] = self.world[i] * 0.1
             time.sleep(dt)
 
         # Snap to exact target
         with self._lock:
+            if motion_id != self._motion_id:
+                return
             for i in range(6):
                 if active[i]:
-                    self.world[i] = target[i]
+                    positions[i] = target[i]
             self.moving = False
 
 
@@ -261,11 +282,23 @@ class MockRobot:
 class MockRobotServer:
     """TCP server that accepts JSON frames and routes them to MockRobot."""
 
-    def __init__(self, host: str = "127.0.0.1", port: int = 9760):
+    def __init__(self, host: str = "127.0.0.1", port: int = 9760, verbose: bool = True):
         self.host = host
         self.port = port
         self.robot = MockRobot()
         self._running = False
+        self._server = None
+        self.verbose = verbose
+
+    def stop(self):
+        """Stop a server started in another thread without waiting for accept()."""
+        self._running = False
+        server, self._server = self._server, None
+        if server is not None:
+            try:
+                server.close()
+            except OSError:
+                pass
 
     def start(self):
         self._running = True
@@ -274,25 +307,39 @@ class MockRobotServer:
         # Allow quick restart on Windows
         server.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 0)
         server.bind((self.host, self.port))
+        self.port = server.getsockname()[1]
         server.listen(5)
-        print(f"[MOCK] Robot server listening on {self.host}:{self.port}")
-        print(f"[MOCK] Press Ctrl+C to stop")
+        server.settimeout(0.25)
+        self._server = server
+        if self.verbose:
+            print(f"[MOCK] Robot server listening on {self.host}:{self.port}")
+            print(f"[MOCK] Press Ctrl+C to stop")
 
         try:
             while self._running:
-                conn, addr = server.accept()
-                print(f"[MOCK] Client connected: {addr}")
+                try:
+                    conn, addr = server.accept()
+                except socket.timeout:
+                    continue
+                if self.verbose:
+                    print(f"[MOCK] Client connected: {addr}")
                 t = threading.Thread(target=self._handle_client,
                                      args=(conn, addr), daemon=True)
                 t.start()
         except KeyboardInterrupt:
-            print("\n[MOCK] Shutting down...")
+            if self.verbose:
+                print("\n[MOCK] Shutting down...")
+        except OSError:
+            if self._running:
+                raise
         finally:
-            server.close()
-            print("[MOCK] Server stopped")
+            self.stop()
+            if self.verbose:
+                print("[MOCK] Server stopped")
 
     def _handle_client(self, conn: socket.socket, addr):
         conn.settimeout(30.0)
+        conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         buf = b""
         try:
             while True:
@@ -322,12 +369,14 @@ class MockRobotServer:
 
                     # Log
                     rtype = frame.get("reqType", frame.get("cmdType", "?"))
-                    print(f"  [{rtype}] → {reply.get('cmdReply', reply.get('queryData', 'ok'))}")
-        except Exception as e:
-            print(f"[MOCK] Client error: {e}")
+                    if self.verbose:
+                        print(f"  [{rtype}] → {reply.get('cmdReply', reply.get('queryData', 'ok'))}")
+        except (ConnectionError, socket.timeout, OSError) as exc:
+            _LOG.debug("Mock client %s closed: %s", addr, exc)
         finally:
             conn.close()
-            print(f"[MOCK] Client disconnected: {addr}")
+            if self.verbose:
+                print(f"[MOCK] Client disconnected: {addr}")
 
 
 if __name__ == "__main__":

@@ -44,22 +44,46 @@ class SensorWorker(QThread):
     def __init__(self, controller, parent=None):
         super().__init__(parent)
         self.controller = controller
-        self._running = False
+        self._stop_event = threading.Event()
+        self._last_error = None
+        self._last_error_at = 0.0
 
     def run(self):
-        self._running = True
-        while self._running:
+        next_sample = time.monotonic()
+        while not self._stop_event.is_set():
             try:
                 fz, tz = self.controller.monitor_2_sensor()
                 if fz is not None and tz is not None:
                     self.data_ready.emit(fz, tz)
+                else:
+                    error = getattr(self.controller, "last_error", None)
+                    if error is not None:
+                        self._emit_error_limited(str(error))
             except Exception as e:
-                self.error_occurred.emit(str(e))
-            self.msleep(50)
+                self._emit_error_limited(str(e))
+            next_sample += SAMPLE_INTERVAL_MS / 1000.0
+            delay = next_sample - time.monotonic()
+            if delay > 0:
+                self._stop_event.wait(delay)
+            else:
+                next_sample = time.monotonic()
 
-    def stop(self):
-        self._running = False
-        self.wait(2000)
+    def _emit_error_limited(self, message):
+        """相同错误最多每秒通知一次，避免断线时堵塞Qt事件队列。"""
+        now = time.monotonic()
+        if message != self._last_error or now - self._last_error_at >= 1.0:
+            self._last_error = message
+            self._last_error_at = now
+            self.error_occurred.emit(message)
+
+    def request_stop(self):
+        self._stop_event.set()
+
+    def stop(self, timeout_ms=2000):
+        self.request_stop()
+        if QThread.currentThread() is not self:
+            return self.wait(timeout_ms)
+        return True
 
 
 class RobotWorker(QThread):
@@ -83,6 +107,12 @@ class RobotWorker(QThread):
         self._sequence = itertools.count()
 
     def submit(self, command, *args, urgent=False):
+        if urgent and command in {"stop", "safe_stop", "disconnect"}:
+            while True:
+                try:
+                    self._commands.get_nowait()
+                except queue.Empty:
+                    break
         priority = 0 if urgent else 10
         self._commands.put((priority, next(self._sequence), command, args))
 
@@ -125,13 +155,14 @@ class RobotWorker(QThread):
             self.connected.emit(self.host, self.port)
             next_poll = 0.0
             while not self._stop_event.is_set():
+                command_executed = False
                 try:
                     _, _, command, args = self._commands.get_nowait()
                     try:
                         self._execute(command, args)
                     except Exception as exc:
                         self.error_occurred.emit(str(exc))
-                    continue
+                    command_executed = True
                 except queue.Empty:
                     pass
                 now = time.monotonic()
@@ -141,7 +172,8 @@ class RobotWorker(QThread):
                     self.joints_ready.emit(joints)
                     next_poll = now + self.poll_interval
                 else:
-                    time.sleep(min(0.02, next_poll - now))
+                    if not command_executed or self._commands.empty():
+                        self._stop_event.wait(min(0.01, next_poll - now))
         except Exception as exc:
             if not self._stop_event.is_set():
                 self.error_occurred.emit(str(exc))
@@ -465,9 +497,16 @@ class AppController:
     def _on_sensor_disconnect(self):
         try:
             if self.worker:
-                self.worker.stop()
+                sensor_worker = self.worker
+                sensor_worker.request_stop()
+                if self.sensor_comm and self.sensor_comm.instrument:
+                    self.sensor_comm.instrument.serial.close()
+                if not sensor_worker.stop():
+                    self.window.statusBar().showMessage(
+                        "传感器读取线程未能及时退出，请检查串口驱动", 8000
+                    )
                 self.worker = None
-            if self.sensor_comm and self.sensor_comm.instrument:
+            elif self.sensor_comm and self.sensor_comm.instrument:
                 self.sensor_comm.instrument.serial.close()
             self.sensor_comm = None
             self.sensor_ctrl = None
@@ -625,6 +664,12 @@ class AppController:
         if self.robot_worker:
             self.robot_worker.stop(wait=True)
         if self.worker:
+            self.worker.request_stop()
+            if self.sensor_comm and self.sensor_comm.instrument:
+                try:
+                    self.sensor_comm.instrument.serial.close()
+                except Exception:
+                    pass
             self.worker.stop()
         for exporter in tuple(self._export_workers):
             exporter.wait(3000)

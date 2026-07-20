@@ -46,10 +46,9 @@ class BorunteRobot(HC1JsonRobot):
 
     def connect(self, timeout: float = 5.0) -> bool:
         # demo 客户端固定使用 5 秒；临时覆盖便于界面快速报告连接失败。
-        super().connect()
+        super().connect(timeout=timeout)
         if not self.is_connected():
             raise RobotError(f"无法连接机械臂 {self.host}:{self.port}")
-        self.sock.settimeout(timeout)
         return True
 
     def read_realtime_state(self):

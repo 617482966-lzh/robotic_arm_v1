@@ -907,14 +907,10 @@ class MainWindow(BaseMainWindow):
     def reset_plot(self, ax_index):
         if ax_index == 0:
             self._disp_data.clear()
-            line, axes, canvas = self.line1, self.ax1, self.canvas1
         else:
             self._ang_data.clear()
-            line, axes, canvas = self.line2, self.ax2, self.canvas2
-        line.set_data([], [])
-        axes.relim()
-        axes.autoscale_view()
-        canvas.draw_idle()
+        # 绕过10 FPS节流，重置操作必须立即反映到界面。
+        self._refresh_plot(ax_index, force=True)
 
 
 if __name__ == "__main__":

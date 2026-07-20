@@ -2,6 +2,7 @@
 """机械臂控制与力传感数据采集 GUI - PySide6 + Matplotlib + .ui"""
 
 import os
+import time
 from datetime import datetime
 
 from PySide6.QtWidgets import (
@@ -305,6 +306,8 @@ class MainWindow(QMainWindow):
             )
 
     def _init_state(self):
+        self._last_plot_draw = [0.0, 0.0]
+        self._plot_draw_interval = 0.10  # 数据保持20 Hz，图形限制为10 FPS。
         for name in ["robotStatusLight", "sensorStatusLight"]:
             w = self._find_child(name)
             if w: w.setStyleSheet(LIGHT_OFF)
@@ -458,21 +461,33 @@ class MainWindow(QMainWindow):
         self._disp_data.append((displacement, force))
         if len(self._disp_data) > 5000:
             self._disp_data = self._disp_data[-5000:]
-        xs = [d[0] for d in self._disp_data]
-        ys = [d[1] for d in self._disp_data]
-        self.line1.set_data(xs, ys)
-        self.ax1.relim(); self.ax1.autoscale_view()
-        self.canvas1.draw_idle()
+        self._refresh_plot(0)
 
     def add_ang_torque(self, angular, torque):
         self._ang_data.append((angular, torque))
         if len(self._ang_data) > 5000:
             self._ang_data = self._ang_data[-5000:]
-        xs = [d[0] for d in self._ang_data]
-        ys = [d[1] for d in self._ang_data]
-        self.line2.set_data(xs, ys)
-        self.ax2.relim(); self.ax2.autoscale_view()
-        self.canvas2.draw_idle()
+        self._refresh_plot(1)
+
+    def _refresh_plot(self, ax_index, force=False):
+        """合并高频重绘；采集和保存仍保留全部20 Hz数据点。"""
+        now = time.monotonic()
+        if not force and now - self._last_plot_draw[ax_index] < self._plot_draw_interval:
+            return
+        self._last_plot_draw[ax_index] = now
+        data = self._disp_data if ax_index == 0 else self._ang_data
+        line = self.line1 if ax_index == 0 else self.line2
+        axes = self.ax1 if ax_index == 0 else self.ax2
+        canvas = self.canvas1 if ax_index == 0 else self.canvas2
+        if data:
+            xs, ys = zip(*data)
+        else:
+            xs, ys = (), ()
+        line.set_data(xs, ys)
+        axes.relim()
+        axes.autoscale_view()
+        if canvas.isVisible():
+            canvas.draw_idle()
 
     # ---- Plot control methods ----
     def set_plot_visible(self, ax_index, visible):
