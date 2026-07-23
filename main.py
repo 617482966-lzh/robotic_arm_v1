@@ -9,6 +9,7 @@ import sys
 import tempfile
 import threading
 import time
+import ctypes
 from pathlib import Path
 import serial.tools.list_ports
 from openpyxl import Workbook
@@ -27,6 +28,24 @@ SAMPLE_INTERVAL_MS = 50  # 20 Hz
 GUI_READY_TIMEOUT_SECONDS = 10.0
 GUI_CHILD_ENV = "ROBOTIC_ARM_GUI_CHILD"
 GUI_READY_FILE_ENV = "ROBOTIC_ARM_GUI_READY_FILE"
+WINDOWS_APP_USER_MODEL_ID = "JLU.RoboticArm.ControlSystem.V2"
+
+
+def configure_windows_app_identity():
+    """在创建QApplication前设置Windows任务栏应用身份。
+
+    直接通过python.exe启动时，Windows默认会沿用Python宿主图标。独立的
+    AppUserModelID使任务栏使用本窗口设置的吉林大学图标进行分组和显示。
+    """
+    if sys.platform != "win32":
+        return
+    try:
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            WINDOWS_APP_USER_MODEL_ID
+        )
+    except (AttributeError, OSError):
+        # 老版本Windows或受限会话中失败时，Qt窗口图标仍然可以正常使用。
+        pass
 
 
 def find_serial_a_port():
@@ -220,6 +239,7 @@ class XlsxExportWorker(QThread):
 class AppController:
 
     def __init__(self):
+        configure_windows_app_identity()
         self.app = QApplication(sys.argv)
         self.app.setAttribute(Qt.AA_Use96Dpi)
         self.app.setStyle("Fusion")

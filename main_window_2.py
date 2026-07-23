@@ -26,11 +26,17 @@ UI_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     "main_window_2.ui",
 )
-ICON_PATH = os.path.join(
+LOGO_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     "picture",
     "jlu.png",
 )
+WINDOWS_ICON_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "picture",
+    "jlu.ico",
+)
+ICON_PATH = WINDOWS_ICON_PATH if os.path.isfile(WINDOWS_ICON_PATH) else LOGO_PATH
 
 WORLD_AXES = ("X", "Y", "Z", "Rx", "Ry", "Rz")
 JOINT_AXES = ("J1", "J2", "J3", "J4", "J5", "J6")
@@ -205,7 +211,7 @@ class MainWindow(BaseMainWindow):
         logo_label = self._find_child("jluLogoLabel")
         if logo_label:
             logo_label.setPixmap(
-                QPixmap(ICON_PATH).scaled(
+                QPixmap(LOGO_PATH).scaled(
                     150,
                     150,
                     Qt.AspectRatioMode.KeepAspectRatio,

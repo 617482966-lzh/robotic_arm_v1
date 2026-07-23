@@ -20,7 +20,7 @@
 - `robot_client/`：正式机械臂 JSON 通信和控制实现。
 - `sensor_2/`：已完善的传感器协议，原则上不修改。
 - `demo/`：机械臂通信示例与使用教程，不作为主程序函数库。
-- `picture/jlu.png`：窗口图标和右侧校徽。
+- `picture/jlu.png`：右侧界面校徽；`picture/jlu.ico`：Windows窗口和任务栏多尺寸图标。
 - `requirements.txt`：部署依赖。
 - `机械臂通信与速度标定记录.md`：协议、标定、功能和界面修改的完整技术记录。
 
