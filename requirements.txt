@@ -1,3 +1,5 @@
+# Runtime: Python 3.12
+# Qt rendering fallback is built into main.py; no extra OpenGL package is required.
 PySide6>=6.7,<7
 matplotlib>=3.8,<4
 openpyxl>=3.1,<4

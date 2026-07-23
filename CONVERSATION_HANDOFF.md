@@ -1,6 +1,6 @@
 # Codex 会话交接文档
 
-更新时间：2026-07-19（Asia/Shanghai）
+更新时间：2026-07-23（Asia/Shanghai）
 
 ## 会话定位
 
@@ -72,7 +72,9 @@ python -m pip install -r requirements.txt
 python main.py
 ```
 
-若 Win10 不显示窗口，从终端运行 `python main.py` 查看错误；重点检查 64 位 Python、Microsoft Visual C++ 2015-2022 x64 运行库和 PySide6 Qt 平台插件。
+启动时 `main.py` 会先使用系统原有的硬件 OpenGL。若 10 秒内未完成主窗口创建（例如 Qt 卡在 `QUiLoader()` 的 OpenGL/GPU 探测），启动器会结束该子进程，并自动设置 `QT_OPENGL=software` 使用 CPU 软件渲染重新启动。该回退不需要安装额外依赖。
+
+若回退后仍不显示窗口，从终端运行 `python main.py` 查看错误；重点检查 64 位 Python、Microsoft Visual C++ 2015-2022 x64 运行库、PySide6 Qt 平台插件和显卡驱动。
 
 ## 继续会话的推荐提示词
 

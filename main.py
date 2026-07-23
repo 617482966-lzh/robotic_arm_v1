@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 """机械臂控制与力传感数据采集 - 主程序入口 + 传感器控制器"""
 
-import sys
 import itertools
+import os
 import queue
+import subprocess
+import sys
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -21,6 +24,9 @@ from robot_client.robot_control import BorunteRobot as RobotComm
 
 
 SAMPLE_INTERVAL_MS = 50  # 20 Hz
+GUI_READY_TIMEOUT_SECONDS = 10.0
+GUI_CHILD_ENV = "ROBOTIC_ARM_GUI_CHILD"
+GUI_READY_FILE_ENV = "ROBOTIC_ARM_GUI_READY_FILE"
 
 
 def find_serial_a_port():
@@ -678,6 +684,81 @@ class AppController:
         return self.app.exec()
 
 
+def _stop_child(process):
+    if process.poll() is not None:
+        return
+    process.terminate()
+    try:
+        process.wait(timeout=3)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
+
+
+def _run_gui_child(env, ready_file, timeout):
+    process = subprocess.Popen(
+        [sys.executable, str(Path(__file__).resolve())],
+        cwd=str(Path(__file__).resolve().parent),
+        env=env,
+    )
+    deadline = time.monotonic() + timeout
+    try:
+        while time.monotonic() < deadline:
+            if ready_file.exists():
+                ready_file.unlink(missing_ok=True)
+                return process.wait(), True
+            return_code = process.poll()
+            if return_code is not None:
+                return return_code, False
+            time.sleep(0.1)
+        _stop_child(process)
+        return None, False
+    except KeyboardInterrupt:
+        _stop_child(process)
+        raise
+
+
+def _run_with_opengl_fallback():
+    ready_file = Path(tempfile.gettempdir()) / f"robotic_arm_gui_{os.getpid()}.ready"
+    ready_file.unlink(missing_ok=True)
+
+    child_env = os.environ.copy()
+    child_env[GUI_CHILD_ENV] = "1"
+    child_env[GUI_READY_FILE_ENV] = str(ready_file)
+
+    try:
+        return_code, ready = _run_gui_child(
+            child_env, ready_file, GUI_READY_TIMEOUT_SECONDS
+        )
+        if ready:
+            return return_code
+
+        if return_code is None:
+            reason = "timed out"
+        else:
+            reason = f"exited before showing the window (code {return_code})"
+        print(
+            f"Qt hardware OpenGL initialization {reason}; "
+            "restarting with software OpenGL.",
+            flush=True,
+        )
+        child_env["QT_OPENGL"] = "software"
+        return_code, _ = _run_gui_child(
+            child_env, ready_file, GUI_READY_TIMEOUT_SECONDS
+        )
+        if return_code is None:
+            print("Qt software OpenGL initialization also timed out.", flush=True)
+            return 1
+        return return_code
+    finally:
+        ready_file.unlink(missing_ok=True)
+
+
 if __name__ == "__main__":
-    ctrl = AppController()
-    sys.exit(ctrl.run())
+    if os.environ.get(GUI_CHILD_ENV) == "1":
+        ctrl = AppController()
+        ready_file_path = os.environ.get(GUI_READY_FILE_ENV)
+        if ready_file_path:
+            Path(ready_file_path).touch()
+        sys.exit(ctrl.run())
+    sys.exit(_run_with_opengl_fallback())
