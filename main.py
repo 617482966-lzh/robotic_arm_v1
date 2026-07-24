@@ -322,7 +322,7 @@ class AppController:
         if not self._can_start_test("贯入"):
             return
         speed, distance, max_force = map(float, self.window.get_test_params_disp())
-        direction = RobotComm.penetration_axis_in_world()
+        direction = RobotComm.penetration_axis_in_world(self._latest_pose[4])
         self._begin_test("testDisp", distance, max_force, direction=direction)
         self._submit_robot("move_along_tool_x", distance, speed)
         self.window.statusBar().showMessage(
@@ -436,7 +436,7 @@ class AppController:
             self._active_test["stop_reason"] = reason
             self._submit_robot("safe_stop", urgent=True)
             self.window.statusBar().showMessage(
-                "正在actionStop立即停止；结束后请在示教器重新切回自动模式…", 10000
+                "正在使用actionPause停止并清空运动队列…", 10000
             )
             return
         kind = self._active_test["kind"]
@@ -448,7 +448,7 @@ class AppController:
             self.window.reset_plot(0 if kind == "testDisp" else 1)
         label = "贯入" if kind == "testDisp" else "剪切"
         self.window.statusBar().showMessage(
-            f"{label}试验结束：{reason}；请确认示教器已重新切回自动模式", 12000
+            f"{label}试验结束：{reason}；机械臂保持使能", 12000
         )
 
     def _reset_test_data(self, kind):
@@ -502,23 +502,53 @@ class AppController:
         else:
             self.window.statusBar().showMessage(f"已保存：{path}", 8000)
 
-    def _on_sensor_connect(self, port, baudrate, slave_addr):
+    def _on_sensor_connect(self, port):
+        actual_port = extract_port_name(port)
         try:
-            actual_port = extract_port_name(port)
-            self.sensor_comm = SensorCommunication(actual_port, slave_address=slave_addr)
-            self.sensor_comm.setup_communication()
-            self.sensor_comm.instrument.serial.baudrate = baudrate
+            # 避免重复点击连接后遗留旧线程或继续占用同一个COM口。
+            if self.worker or self.sensor_comm:
+                self._on_sensor_disconnect()
+            self.sensor_comm = SensorCommunication(actual_port)
             self.sensor_ctrl = SensorController(self.sensor_comm)
+
+            # COM口能够打开不代表传感器已连接。先进行最多三次只读握手，
+            # 只有0x01C2寄存器成功返回后才启动20 Hz线程和点亮连接状态。
+            initial_data = None
+            for attempt in range(3):
+                initial_data = self.sensor_ctrl.monitor_2_sensor()
+                if initial_data[0] is not None and initial_data[1] is not None:
+                    break
+                if attempt < 2:
+                    time.sleep(0.05)
+            else:
+                detail = self.sensor_ctrl.last_error or "未收到Modbus响应"
+                raise RuntimeError(
+                    f"{actual_port}可以打开，但传感器模块无响应；"
+                    f"请检查供电、A/B接线和转换器，详细信息: {detail}"
+                )
 
             self.worker = SensorWorker(self.sensor_ctrl)
             self.worker.data_ready.connect(self._on_data_ready)
             self.worker.error_occurred.connect(self._on_worker_error)
             self.worker.start()
 
+            self._on_data_ready(*initial_data)
+
             self.window._set_sensor_connected(True)
             self.window.statusBar().showMessage(f"传感器已连接: {actual_port}", 5000)
         except Exception as e:
-            self.window.statusBar().showMessage(f"连接失败: {e}", 8000)
+            if self.sensor_comm and self.sensor_comm.instrument:
+                try:
+                    self.sensor_comm.instrument.serial.close()
+                except Exception:
+                    pass
+            self.worker = None
+            self.sensor_ctrl = None
+            self.sensor_comm = None
+            self.window._set_sensor_connected(False)
+            self.window.statusBar().showMessage(
+                f"传感器连接失败（{actual_port}）: {e}", 12000
+            )
 
     def _on_sensor_disconnect(self):
         try:

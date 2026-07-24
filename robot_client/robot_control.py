@@ -12,7 +12,8 @@ import time
 
 from robot_client.hc1_json import HC1JsonRobot
 
-GLOBAL_SPEED_PERCENT = 10.0
+WORLD_SPEED_GLOBAL_PERCENT = 5.0
+JOINT_SPEED_GLOBAL_PERCENT = 10.0
 DEFAULT_INTERPOLATION_FREQUENCY_HZ = 5.0
 MAX_INTERPOLATION_SEGMENTS = 10
 MAX_REQUESTED_JOINT_SPEED_DEG_S = 20.0
@@ -64,11 +65,23 @@ class BorunteRobot(HC1JsonRobot):
         )
 
     def configure_calibrated_speed_control(self):
-        """固定使用逐轴标定时的10%全局速度。"""
-        reply = self.set_global_speed(GLOBAL_SPEED_PERCENT)
+        """连接后先恢复关节逐轴标定所使用的10%全局速度。"""
+        reply = self.set_global_speed(JOINT_SPEED_GLOBAL_PERCENT)
         if not reply:
             raise RobotError("设置机械臂全局速度10%失败")
         return reply
+
+    def _configure_world_physical_speed(self) -> None:
+        """应用action51线速度标定所使用的5%全局速度。"""
+        reply = self.set_global_speed(WORLD_SPEED_GLOBAL_PERCENT)
+        if not reply:
+            raise RobotError("设置世界坐标运动全局速度5%失败")
+
+    def _configure_joint_speed(self) -> None:
+        """应用action4逐关节标定所使用的10%全局速度。"""
+        reply = self.set_global_speed(JOINT_SPEED_GLOBAL_PERCENT)
+        if not reply:
+            raise RobotError("设置关节运动全局速度10%失败")
 
     @staticmethod
     def _require_add_rcc_ok(reply, operation: str):
@@ -102,6 +115,7 @@ class BorunteRobot(HC1JsonRobot):
         )
         # action=51 已启用物理速度，action=10 不再携带 speed，避免覆盖。
         move.pop("speed", None)
+        self._configure_world_physical_speed()
         return self.add_rcc(
             [self._physical_speed_instruction(speed_mm_s), move],
             empty=True,
@@ -123,6 +137,7 @@ class BorunteRobot(HC1JsonRobot):
             *target, speed_pct=speed, ck_status=ck_status, one_shot=True
         )
         move.pop("speed", None)
+        self._configure_world_physical_speed()
         return self.add_rcc(
             [self._physical_speed_instruction(speed_mm_s), move],
             empty=True,
@@ -145,7 +160,7 @@ class BorunteRobot(HC1JsonRobot):
         if pose is None:
             raise RobotError("无法读取末端向量运动起始位姿")
         start = (pose["x"], pose["y"], pose["z"], pose["u"], pose["v"], pose["w"])
-        direction = self.penetration_axis_in_world()
+        direction = self.penetration_axis_in_world(start[4])
         target = (
             start[0] + distance * direction[0],
             start[1] + distance * direction[1],
@@ -157,15 +172,21 @@ class BorunteRobot(HC1JsonRobot):
             one_shot=True, smooth=9,
         )
         move.pop("speed", None)
+        self._configure_world_physical_speed()
         reply = self.add_rcc(
             [self._physical_speed_instruction(speed), move], empty=True, show=False
         )
-        return {"reply": reply, "start": start, "target": target, "direction": direction}
+        start_reply = self.start()
+        return {
+            "reply": reply, "startButton": start_reply,
+            "start": start, "target": target, "direction": direction,
+        }
 
     @staticmethod
-    def penetration_axis_in_world():
-        """贯入试验固定沿世界坐标系Z负方向运动。"""
-        return 0.0, 0.0, -1.0
+    def penetration_axis_in_world(ry_deg: float):
+        """由当前Ry返回贯入向量：(sin(Ry), 0, -cos(Ry))。"""
+        ry = math.radians(float(ry_deg))
+        return math.sin(ry), 0.0, -math.cos(ry)
 
     @staticmethod
     def tool_x_axis_in_world(rx_deg: float, ry_deg: float, rz_deg: float):
@@ -179,31 +200,33 @@ class BorunteRobot(HC1JsonRobot):
         )
 
     def safe_stop_and_clear(self, timeout: float = 2.0, interval: float = 0.01):
-        """用actionStop立即停止，确认静止后清空远程列表并清除报警。
+        """使用actionPause停止并清空远程列表，保持机械臂使能状态。
 
-        实机确认stopButton/actionPause不能中止正在执行的远程action10；
-        actionStop会进入模式3，下一次试验前需在示教器切回自动模式。
+        实机确认actionPause可中止正在执行的action10，且不会进入模式3。
+        确认静止后清空列表并保持暂停；下一条试验运动加入列表后再发送
+        startButton。该路径禁止发送actionStop。
         """
         deadline = time.monotonic() + float(timeout)
-        stop_reply = self.command(["actionStop"], show=False)
+        pause_replies = []
+        clear_replies = []
         state = None
         while time.monotonic() < deadline:
+            pause_replies.append(self.pause())
+            clear_replies.append(self.add_rcc([], empty=True, show=False))
             state = self.read_status_pose()
             if state is not None and not state["isMoving"]:
                 break
-            time.sleep(float(interval))
+            time.sleep(max(0.02, float(interval)))
         else:
             raise RobotError(
-                f"actionStop在{timeout:.1f}s内未能确认机械臂停止，回复: {stop_reply}"
+                f"actionPause在{timeout:.1f}s内未能确认停止；未发送actionStop。"
+                f"当前状态: {state}"
             )
-        clear_reply = self.add_rcc([], empty=True, show=False)
-        button_reply = self.stop_button()
-        alarm_reply = self.clear_alarm()
-        final_state = self.read_status_pose()
         return {
-            "actionStop": stop_reply, "clear": clear_reply,
-            "stopButton": button_reply, "clearAlarm": alarm_reply,
-            "stopped_state": state, "final_state": final_state,
+            "actionPause": pause_replies,
+            "clear": clear_replies,
+            "stopped_state": state,
+            "final_state": state,
         }
 
     @staticmethod
@@ -366,11 +389,14 @@ class BorunteRobot(HC1JsonRobot):
         move = self._build_free_path_inst(
             *values, speed_pct=speed, ck_status=ck_status, one_shot=True
         )
-        return self.add_rcc(
+        self._configure_joint_speed()
+        reply = self.add_rcc(
             [self._disable_physical_speed_instruction(), move],
             empty=True,
             show=False,
         )
+        self.start()
+        return reply
 
     def move_joints_increment(self, increments, speed_deg_s: float):
         increments = tuple(float(value) for value in increments)
@@ -386,11 +412,14 @@ class BorunteRobot(HC1JsonRobot):
         move = self._build_free_path_inst(
             *target, speed_pct=speed, ck_status=ck_status, one_shot=True
         )
-        return self.add_rcc(
+        self._configure_joint_speed()
+        reply = self.add_rcc(
             [self._disable_physical_speed_instruction(), move],
             empty=True,
             show=False,
         )
+        self.start()
+        return reply
 
     def home(self, speed_deg_s: float = 10.0):
         """按需求以六关节零位作为回零目标。"""

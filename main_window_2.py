@@ -184,6 +184,7 @@ QWidget#robotActionContainer { background: transparent; }
 class MainWindow(BaseMainWindow):
     """加载 ``main_window_2.ui`` 的第二版主窗口。"""
 
+    sensor_connect_requested = Signal(str)  # 仅提交串口，通信参数由sensor_2统一管理
     world_increment_requested = Signal(object)  # CartesianMoveRequest
     world_absolute_requested = Signal(object)   # CartesianMoveRequest
     joint_increment_requested = Signal(object)  # JointMoveRequest
@@ -745,10 +746,10 @@ class MainWindow(BaseMainWindow):
         self.robot_connect_requested.emit(ip, port)
 
     def _on_sensor_connect(self):
-        """保持 sensor_2 的 57600 波特率和从站地址 1。"""
+        """只提交串口号，具体通信参数由sensor_2管理。"""
         port_widget = self._find_child("sensorComPort")
         port = port_widget.text().strip() if port_widget else "COM3"
-        self.sensor_connect_requested.emit(port, 57600, 1)
+        self.sensor_connect_requested.emit(port)
 
     def update_pose(self, x, y, z, rx, ry, rz):
         self._current_pose = tuple(float(v) for v in (x, y, z, rx, ry, rz))

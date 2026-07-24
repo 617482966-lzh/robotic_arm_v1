@@ -1,0 +1,22 @@
+>>> SEND
+{
+  "dsID": "www.hc-system.com.RemoteMonitor",
+  "reqType": "command",
+  "packID": "8002",
+  "cmdData": [
+    "modifyGSPD",
+    "50"
+  ]
+}
+<<< RECV
+{'cmdReply': ['modifyGSPD', 'ok'], 'dsID': 'www.hc-system.com.RemoteMonitor', 'packID': '8002', 'reqType': 'command'}
+20:51:20 START output=C:\Users\www61\OneDrive\JLU\pycharm_code\robotic_arm_v1\data\penetration_angle_speed_20260724_205120.csv original_Ry=49.001740 speed=10.0 distance=100.0
+20:51:47 ANGLE 00/90 out=9.9977 back=10.0005 mm/s return_error=0.0033 mm
+20:52:10 ANGLE 01/90 out=9.9999 back=9.9989 mm/s return_error=0.0042 mm
+20:52:32 ANGLE 02/90 out=10.0003 back=9.9974 mm/s return_error=0.0074 mm
+20:52:55 ANGLE 03/90 out=10.0004 back=10.0003 mm/s return_error=0.0075 mm
+20:53:17 ANGLE 04/90 out=10.0001 back=10.0003 mm/s return_error=0.0075 mm
+20:53:40 ANGLE 05/90 out=9.9992 back=10.0001 mm/s return_error=0.0092 mm
+20:54:02 ANGLE 06/90 out=10.0003 back=10.0004 mm/s return_error=0.0043 mm
+20:54:24 ANGLE 07/90 out=9.9999 back=10.0003 mm/s return_error=0.0077 mm
+20:54:47 ANGLE 08/90 out=10.0002 back=10.0002 mm/s return_error=0.0043 mm

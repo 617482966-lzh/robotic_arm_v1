@@ -17,10 +17,12 @@ class SensorCommunication:
     """线程安全的 MinimalModbus 适配器。
 
     ``instrument`` 属性和原有读写方法均保留，避免影响现有主程序。
-    默认 100 ms 超时兼顾 20 Hz 连续采集时的响应性和 USB 串口抖动容忍度。
+    默认使用115200-8-N-1、Modbus RTU、从站地址1。
     """
 
-    DEFAULT_TIMEOUT = 0.1
+    # 保持原协议经过实机使用的200 ms容错；主程序连接时会主动握手，
+    # 因此断线不会再被误判为连接成功。
+    DEFAULT_TIMEOUT = 0.2
 
     def __init__(self, port, slave_address=1):
         self._lock = threading.RLock()
@@ -28,10 +30,10 @@ class SensorCommunication:
         self.setup_communication()
 
     def setup_communication(self):
-        """设置 57600-8-N-1、Modbus RTU 通信参数。"""
+        """设置115200-8-N-1、Modbus RTU通信参数。"""
         with self._lock:
             serial_port = self.instrument.serial
-            serial_port.baudrate = 57600
+            serial_port.baudrate = 115200
             serial_port.bytesize = 8
             serial_port.parity = serial.PARITY_NONE
             serial_port.stopbits = 1

@@ -1,0 +1,55 @@
+>>> SEND
+{
+  "dsID": "www.hc-system.com.RemoteMonitor",
+  "reqType": "command",
+  "packID": "8002",
+  "cmdData": [
+    "modifyGSPD",
+    "50"
+  ]
+}
+<<< RECV
+{'cmdReply': ['modifyGSPD', 'ok'], 'dsID': 'www.hc-system.com.RemoteMonitor', 'packID': '8002', 'reqType': 'command'}
+20:57:29 START output=C:\Users\www61\OneDrive\JLU\pycharm_code\robotic_arm_v1\data\penetration_angle_speed_20260724_205729.csv original_Ry=49.003159 speed=10.0 distance=100.0
+20:57:56 ANGLE 00/90 out=10.0004 back=10.0006 mm/s return_error=0.0066 mm
+20:58:19 ANGLE 01/90 out=10.0009 back=9.9996 mm/s return_error=0.0042 mm
+20:58:41 ANGLE 02/90 out=10.0006 back=10.0010 mm/s return_error=0.0042 mm
+20:59:04 ANGLE 03/90 out=10.0008 back=10.0004 mm/s return_error=0.0042 mm
+20:59:26 ANGLE 04/90 out=10.0004 back=10.0005 mm/s return_error=0.0043 mm
+20:59:49 ANGLE 05/90 out=10.0010 back=10.0005 mm/s return_error=0.0058 mm
+21:00:11 ANGLE 06/90 out=10.0007 back=10.0003 mm/s return_error=0.0042 mm
+21:00:33 ANGLE 07/90 out=10.0002 back=10.0008 mm/s return_error=0.0043 mm
+21:00:56 ANGLE 08/90 out=10.0010 back=10.0011 mm/s return_error=0.0042 mm
+21:01:18 ANGLE 09/90 out=9.9999 back=10.0006 mm/s return_error=0.0069 mm
+21:01:41 ANGLE 10/90 out=10.0002 back=10.0008 mm/s return_error=0.0043 mm
+21:02:03 ANGLE 11/90 out=9.9995 back=10.0005 mm/s return_error=0.0043 mm
+21:02:26 ANGLE 12/90 out=10.0003 back=10.0007 mm/s return_error=0.0028 mm
+21:02:48 ANGLE 13/90 out=10.0006 back=10.0003 mm/s return_error=0.0044 mm
+21:03:10 ANGLE 14/90 out=10.0002 back=10.0005 mm/s return_error=0.0070 mm
+21:03:33 ANGLE 15/90 out=10.0004 back=10.0003 mm/s return_error=0.0035 mm
+21:03:55 ANGLE 16/90 out=9.9986 back=10.0004 mm/s return_error=0.0044 mm
+21:04:18 ANGLE 17/90 out=10.0008 back=9.9980 mm/s return_error=0.0044 mm
+21:04:40 ANGLE 18/90 out=10.0005 back=10.0013 mm/s return_error=0.0043 mm
+21:05:03 ANGLE 19/90 out=10.0000 back=10.0003 mm/s return_error=0.0043 mm
+21:05:25 ANGLE 20/90 out=10.0000 back=10.0008 mm/s return_error=0.0043 mm
+21:05:47 ANGLE 21/90 out=10.0007 back=10.0004 mm/s return_error=0.0072 mm
+21:06:10 ANGLE 22/90 out=10.0004 back=10.0011 mm/s return_error=0.0044 mm
+21:06:32 ANGLE 23/90 out=10.0008 back=9.9985 mm/s return_error=0.0043 mm
+21:06:55 ANGLE 24/90 out=10.0007 back=10.0000 mm/s return_error=0.0043 mm
+21:07:17 ANGLE 25/90 out=10.0007 back=10.0004 mm/s return_error=0.0075 mm
+21:07:40 ANGLE 26/90 out=10.0005 back=10.0012 mm/s return_error=0.0043 mm
+21:08:02 ANGLE 27/90 out=10.0007 back=10.0002 mm/s return_error=0.0044 mm
+21:08:24 ANGLE 28/90 out=10.0012 back=10.0010 mm/s return_error=0.0043 mm
+21:08:47 ANGLE 29/90 out=10.0008 back=10.0007 mm/s return_error=0.0043 mm
+21:09:09 ANGLE 30/90 out=10.0009 back=10.0003 mm/s return_error=0.0044 mm
+21:09:32 ANGLE 31/90 out=10.0007 back=10.0004 mm/s return_error=0.0043 mm
+21:09:54 ANGLE 32/90 out=10.0012 back=10.0006 mm/s return_error=0.0043 mm
+21:10:16 ANGLE 33/90 out=10.0011 back=10.0004 mm/s return_error=0.0044 mm
+21:10:39 ANGLE 34/90 out=9.9998 back=10.0013 mm/s return_error=0.0058 mm
+21:11:01 ANGLE 35/90 out=9.9977 back=10.0003 mm/s return_error=0.0044 mm
+21:11:24 ANGLE 36/90 out=10.0001 back=10.0004 mm/s return_error=0.0031 mm
+21:11:46 ANGLE 37/90 out=10.0013 back=10.0006 mm/s return_error=0.0029 mm
+21:12:09 ANGLE 38/90 out=10.0006 back=10.0012 mm/s return_error=0.0044 mm
+21:12:31 ANGLE 39/90 out=10.0002 back=10.0007 mm/s return_error=0.0077 mm
+21:12:53 ANGLE 40/90 out=10.0004 back=10.0005 mm/s return_error=0.0044 mm
+21:13:16 ANGLE 41/90 out=9.9994 back=10.0005 mm/s return_error=0.0045 mm
