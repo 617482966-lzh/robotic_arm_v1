@@ -92,6 +92,11 @@ class BorunteRobot(HC1JsonRobot):
 
     @staticmethod
     def _physical_speed_instruction(speed_mm_s: float) -> dict:
+        """构建action51物理速度。
+
+        本机实测：全局速度5%且action10不含speed字段时，此整数值与末端
+        稳态线速度mm/s一一对应。action10一旦携带speed字段会覆盖该效果。
+        """
         if speed_mm_s <= 0:
             raise ValueError("世界坐标运动速度必须大于 0 mm/s")
         return {
@@ -106,6 +111,11 @@ class BorunteRobot(HC1JsonRobot):
         }
 
     def move_world_absolute(self, values, speed_mm_s: float):
+        """按action51物理线速度发送世界坐标绝对目标。
+
+        ``speed_mm_s``表示XYZ三维轨迹的合成线速度；Rx/Ry/Rz为目标姿态，
+        不把该数值解释为deg/s。
+        """
         values = tuple(float(v) for v in values)
         if len(values) != 6:
             raise ValueError("世界坐标目标必须包含 6 个值")
@@ -113,16 +123,24 @@ class BorunteRobot(HC1JsonRobot):
         move = self._build_pose_line_inst(
             *values, speed_pct=speed, ck_status=0x3F, one_shot=True
         )
-        # action=51 已启用物理速度，action=10 不再携带 speed，避免覆盖。
+        # 实机确认action10.speed优先于action51；必须删除该字段，才能让
+        # action51在全局5%下精确控制末端实际线速度。
         move.pop("speed", None)
         self._configure_world_physical_speed()
-        return self.add_rcc(
+        reply = self.add_rcc(
             [self._physical_speed_instruction(speed_mm_s), move],
             empty=True,
             show=False,
         )
+        self.start()
+        return reply
 
     def move_world_increment(self, increments, speed_mm_s: float):
+        """按action51物理线速度发送世界坐标增量目标。
+
+        ``speed_mm_s``表示XYZ三维轨迹的合成线速度；控制器根据目标XYZ
+        自动分配各轴速度，action10不携带speed字段。
+        """
         increments = tuple(float(value) for value in increments)
         if len(increments) != 6:
             raise ValueError("世界坐标增量必须包含 X/Y/Z/Rx/Ry/Rz 六个值")
@@ -138,11 +156,13 @@ class BorunteRobot(HC1JsonRobot):
         )
         move.pop("speed", None)
         self._configure_world_physical_speed()
-        return self.add_rcc(
+        reply = self.add_rcc(
             [self._physical_speed_instruction(speed_mm_s), move],
             empty=True,
             show=False,
         )
+        self.start()
+        return reply
 
     def move_along_tool_x(self, distance_mm: float, speed_mm_s: float):
         """沿当前末端工具X向量运动，世界姿态角保持为启动时的值。
