@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""机械臂控制与力传感数据采集 - 主程序入口 + 传感器控制器"""
+"""机械臂控制与六维力传感数据采集 V3 主程序。"""
 
 import itertools
 import os
@@ -11,16 +11,24 @@ import threading
 import time
 import ctypes
 from pathlib import Path
+
+# 归档应用可以直接从本目录启动；通信模块仍由项目根目录统一维护。
+APP_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = APP_DIR.parents[1]
+for module_path in (str(PROJECT_ROOT), str(APP_DIR)):
+    if module_path not in sys.path:
+        sys.path.insert(0, module_path)
+
 import serial.tools.list_ports
 from openpyxl import Workbook
 
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt, QThread, QTimer, Signal
 
-from main_window_2 import MainWindow
+from main_window_3 import MainWindow
 
-from sensor_2.communication import SensorCommunication
-from sensor_2.controller import SensorController
+from sensor_6.communication import SensorCommunication
+from sensor_6.controller import SensorController
 from robot_client.robot_control import BorunteRobot as RobotComm
 
 
@@ -28,7 +36,7 @@ SAMPLE_INTERVAL_MS = 50  # 20 Hz
 GUI_READY_TIMEOUT_SECONDS = 10.0
 GUI_CHILD_ENV = "ROBOTIC_ARM_GUI_CHILD"
 GUI_READY_FILE_ENV = "ROBOTIC_ARM_GUI_READY_FILE"
-WINDOWS_APP_USER_MODEL_ID = "JLU.RoboticArm.ControlSystem.V2"
+WINDOWS_APP_USER_MODEL_ID = "JLU.RoboticArm.ControlSystem.V3"
 
 
 def configure_windows_app_identity():
@@ -63,7 +71,7 @@ def extract_port_name(full_text):
 
 
 class SensorWorker(QThread):
-    data_ready = Signal(float, float)
+    data_ready = Signal(float, float, float, float, float, float)
     error_occurred = Signal(str)
 
     def __init__(self, controller, parent=None):
@@ -77,9 +85,9 @@ class SensorWorker(QThread):
         next_sample = time.monotonic()
         while not self._stop_event.is_set():
             try:
-                fz, tz = self.controller.monitor_2_sensor()
-                if fz is not None and tz is not None:
-                    self.data_ready.emit(fz, tz)
+                values = self.controller.monitor_6_sensor()
+                if all(value is not None for value in values):
+                    self.data_ready.emit(*values)
                 else:
                     error = getattr(self.controller, "last_error", None)
                     if error is not None:
@@ -222,6 +230,7 @@ class XlsxExportWorker(QThread):
         self.rows = tuple(tuple(row) for row in rows)
 
     def run(self):
+        workbook = None
         try:
             path = Path(self.filepath)
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -231,9 +240,14 @@ class XlsxExportWorker(QThread):
             for row in self.rows:
                 sheet.append(row)
             workbook.save(path)
+            workbook.close()
+            workbook = None
             self.saved.emit(str(path))
         except Exception as exc:
             self.failed.emit(str(exc))
+        finally:
+            if workbook is not None:
+                workbook.close()
 
 
 class AppController:
@@ -251,8 +265,7 @@ class AppController:
         self.worker = None
         self._latest_pose = None
         self._latest_joints = None
-        self._latest_fz = 0.0
-        self._latest_tz = 0.0
+        self._latest_wrench = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         self._active_test = None
         self._test_data = {"testDisp": [], "testShear": []}
         self._export_workers = set()
@@ -284,8 +297,7 @@ class AppController:
         self.window.sensor_refresh_requested.connect(self._on_sensor_refresh)
 
         self.window.zero_all_requested.connect(self._on_zero_all)
-        self.window.zero_pressure_requested.connect(self._on_zero_pressure)
-        self.window.zero_torque_requested.connect(self._on_zero_torque)
+        self.window.sensor_zero_channel_requested.connect(self._on_zero_channel)
 
         self.window.robot_connect_requested.connect(self._on_robot_connect)
         self.window.robot_disconnect_requested.connect(self._on_robot_disconnect)
@@ -369,8 +381,7 @@ class AppController:
             "target_xyz": target_xyz,
             "start_joints": tuple(self._latest_joints),
             "direction": direction,
-            "base_fz": self._latest_fz if self.worker else 0.0,
-            "base_tz": self._latest_tz if self.worker else 0.0,
+            "base_wrench": self._latest_wrench if self.worker else (0.0,) * 6,
             "previous_j6": float(self._latest_joints[5]),
             "accumulated_j6": 0.0,
         }
@@ -387,8 +398,12 @@ class AppController:
             return
         pose = tuple(self._latest_pose)
         joints = tuple(self._latest_joints)
-        fz = self._latest_fz - state["base_fz"] if self.worker else 0.0
-        tz = self._latest_tz - state["base_tz"] if self.worker else 0.0
+        relative_wrench = tuple(
+            self._latest_wrench[index] - state["base_wrench"][index]
+            for index in range(6)
+        ) if self.worker else (0.0,) * 6
+        fz = relative_wrench[2]
+        tz = relative_wrench[5]
         elapsed_ms = (time.monotonic() - state["started"]) * 1000.0
 
         if state["kind"] == "testDisp":
@@ -403,7 +418,7 @@ class AppController:
             reached = remaining <= 0.3 or depth >= state["target"] - 0.2
             # 保存和曲线使用起点置零后的相对力；安全上限必须与界面显示的
             # 原始Fz比较，否则存在起始预载荷时会延迟甚至完全不触发停止。
-            overloaded = abs(self._latest_fz) >= state["limit"]
+            overloaded = abs(self._latest_wrench[2]) >= state["limit"]
             reason = "达到目标世界坐标" if reached else "达到最大力"
         else:
             step = self._shortest_angle_delta(joints[5], state["previous_j6"])
@@ -413,14 +428,12 @@ class AppController:
             depth = 0.0
             self.window.add_ang_torque(angle, tz)
             reached = angle >= state["target"] - 0.1
-            overloaded = abs(self._latest_tz) >= state["limit"]
+            overloaded = abs(self._latest_wrench[5]) >= state["limit"]
             reason = "达到目标角位移" if reached else "达到最大扭矩"
 
         self._test_data[state["kind"]].append((
             round(elapsed_ms, 3), round(depth, 6), round(angle, 6),
-            round(fz, 6), round(tz, 6),
-            round(self._latest_fz if self.worker else 0.0, 6),
-            round(self._latest_tz if self.worker else 0.0, 6),
+            *(round(value, 6) for value in relative_wrench),
             *pose, *joints,
         ))
         if (reached or overloaded) and not state.get("stop_requested"):
@@ -465,34 +478,44 @@ class AppController:
         if not rows:
             self.window.statusBar().showMessage("没有可保存的试验数据", 5000)
             return
-        common_headers = (
-            "X/mm", "Y/mm", "Z/mm", "U/deg", "V/deg", "W/deg",
-            "J1/deg", "J2/deg", "J3/deg", "J4/deg", "J5/deg", "J6/deg",
-        )
-        if kind == "testDisp":
-            headers = (
-                "时间戳/ms", "贯入深度/mm", "拉压力/N", "扭矩/N·m",
-                "原始拉压力/N", "原始扭矩/N·m", *common_headers,
-            )
-            rows = tuple(
-                (row[0], row[1], row[3], row[4], row[5], row[6], *row[7:])
-                for row in rows
-            )
-        else:
-            headers = (
-                "时间戳/ms", "角位移/deg", "扭矩/N·m", "拉压力/N",
-                "原始扭矩/N·m", "原始拉压力/N", *common_headers,
-            )
-            rows = tuple(
-                (row[0], row[2], row[4], row[3], row[6], row[5], *row[7:])
-                for row in rows
-            )
+        headers, rows = self._format_test_export(kind, rows)
         exporter = XlsxExportWorker(filepath, headers, rows, self.window)
         self._export_workers.add(exporter)
         exporter.saved.connect(lambda path, w=exporter: self._on_export_finished(w, path, None))
         exporter.failed.connect(lambda error, w=exporter: self._on_export_finished(w, None, error))
         exporter.start()
         self.window.statusBar().showMessage("正在后台保存XLSX…", 3000)
+
+    @staticmethod
+    def _format_test_export(kind, rows):
+        """按试验类型生成包含全部六维数据的XLSX表头和行。"""
+        common_headers = (
+            "X/mm", "Y/mm", "Z/mm", "U/deg", "V/deg", "W/deg",
+            "J1/deg", "J2/deg", "J3/deg", "J4/deg", "J5/deg", "J6/deg",
+        )
+        wrench_headers = (
+            "Fx/N", "Fy/N", "Fz/N",
+            "Tx/N·m", "Ty/N·m", "Tz/N·m",
+        )
+        if kind == "testDisp":
+            headers = (
+                "时间戳/ms", "贯入深度/mm", *wrench_headers,
+                *common_headers,
+            )
+            rows = tuple(
+                (row[0], row[1], *row[3:9], *row[9:])
+                for row in rows
+            )
+        else:
+            headers = (
+                "时间戳/ms", "角位移/deg", *wrench_headers,
+                *common_headers,
+            )
+            rows = tuple(
+                (row[0], row[2], *row[3:9], *row[9:])
+                for row in rows
+            )
+        return headers, rows
 
     def _on_export_finished(self, worker, path, error):
         self._export_workers.discard(worker)
@@ -511,12 +534,12 @@ class AppController:
             self.sensor_comm = SensorCommunication(actual_port)
             self.sensor_ctrl = SensorController(self.sensor_comm)
 
-            # COM口能够打开不代表传感器已连接。先进行最多三次只读握手，
-            # 只有0x01C2寄存器成功返回后才启动20 Hz线程和点亮连接状态。
+            # COM口能够打开不代表传感器已连接。先进行最多三次六维只读握手，
+            # 只有功能码04成功返回12个输入寄存器后才启动20 Hz采集线程。
             initial_data = None
             for attempt in range(3):
-                initial_data = self.sensor_ctrl.monitor_2_sensor()
-                if initial_data[0] is not None and initial_data[1] is not None:
+                initial_data = self.sensor_ctrl.monitor_6_sensor()
+                if all(value is not None for value in initial_data):
                     break
                 if attempt < 2:
                     time.sleep(0.05)
@@ -537,14 +560,16 @@ class AppController:
             self.window._set_sensor_connected(True)
             self.window.statusBar().showMessage(f"传感器已连接: {actual_port}", 5000)
         except Exception as e:
-            if self.sensor_comm and self.sensor_comm.instrument:
+            if self.sensor_comm:
                 try:
-                    self.sensor_comm.instrument.serial.close()
+                    self.sensor_comm.close()
                 except Exception:
                     pass
             self.worker = None
             self.sensor_ctrl = None
             self.sensor_comm = None
+            self._latest_wrench = (0.0,) * 6
+            self.window.clear_force_torque()
             self.window._set_sensor_connected(False)
             self.window.statusBar().showMessage(
                 f"传感器连接失败（{actual_port}）: {e}", 12000
@@ -555,36 +580,39 @@ class AppController:
             if self.worker:
                 sensor_worker = self.worker
                 sensor_worker.request_stop()
-                if self.sensor_comm and self.sensor_comm.instrument:
-                    self.sensor_comm.instrument.serial.close()
+                if self.sensor_comm:
+                    self.sensor_comm.close()
                 if not sensor_worker.stop():
                     self.window.statusBar().showMessage(
                         "传感器读取线程未能及时退出，请检查串口驱动", 8000
                     )
                 self.worker = None
-            elif self.sensor_comm and self.sensor_comm.instrument:
-                self.sensor_comm.instrument.serial.close()
+            elif self.sensor_comm:
+                self.sensor_comm.close()
             self.sensor_comm = None
             self.sensor_ctrl = None
         except Exception:
             pass
+        self._latest_wrench = (0.0,) * 6
+        self.window.clear_force_torque()
         self.window._set_sensor_connected(False)
         self.window.statusBar().showMessage("传感器已断开", 5000)
 
-    def _on_data_ready(self, fz, tz):
-        self._latest_fz = float(fz)
-        self._latest_tz = float(tz)
-        self.window.update_force_torque(fz, tz)
+    def _on_data_ready(self, fx, fy, fz, tx, ty, tz):
+        self._latest_wrench = tuple(
+            float(value) for value in (fx, fy, fz, tx, ty, tz)
+        )
+        self.window.update_force_torque(*self._latest_wrench)
         # 直接在20 Hz传感器数据到达时检查阈值，避免再等待GUI采样定时器，
         # 最坏可减少约50 ms的停止判定延迟。
         state = self._active_test
         if state and not state.get("stop_requested"):
             if state["kind"] == "testDisp":
-                value = abs(self._latest_fz)
+                value = abs(self._latest_wrench[2])
                 if value >= state["limit"]:
                     self._finish_active_test("达到最大力", send_stop=True)
             else:
-                value = abs(self._latest_tz)
+                value = abs(self._latest_wrench[5])
                 if value >= state["limit"]:
                     self._finish_active_test("达到最大扭矩", send_stop=True)
 
@@ -610,23 +638,16 @@ class AppController:
         else:
             self.window.statusBar().showMessage("传感器未连接", 3000)
 
-    def _on_zero_pressure(self):
+    def _on_zero_channel(self, channel):
         if self.sensor_ctrl:
             try:
-                self.sensor_ctrl.reset_pulling_pressure()
-                self.window.statusBar().showMessage("压力置零完成", 3000)
+                self.sensor_ctrl.zero_channel(channel)
+                channel_name = ("Fx", "Fy", "Fz", "Tx", "Ty", "Tz")[channel - 1]
+                self.window.statusBar().showMessage(
+                    f"{channel_name}通道置零完成", 3000
+                )
             except Exception as e:
-                self.window.statusBar().showMessage(f"压力置零失败: {e}", 5000)
-        else:
-            self.window.statusBar().showMessage("传感器未连接", 3000)
-
-    def _on_zero_torque(self):
-        if self.sensor_ctrl:
-            try:
-                self.sensor_ctrl.reset_torque()
-                self.window.statusBar().showMessage("扭矩置零完成", 3000)
-            except Exception as e:
-                self.window.statusBar().showMessage(f"扭矩置零失败: {e}", 5000)
+                self.window.statusBar().showMessage(f"通道置零失败: {e}", 5000)
         else:
             self.window.statusBar().showMessage("传感器未连接", 3000)
 
@@ -721,9 +742,9 @@ class AppController:
             self.robot_worker.stop(wait=True)
         if self.worker:
             self.worker.request_stop()
-            if self.sensor_comm and self.sensor_comm.instrument:
+            if self.sensor_comm:
                 try:
-                    self.sensor_comm.instrument.serial.close()
+                    self.sensor_comm.close()
                 except Exception:
                     pass
             self.worker.stop()

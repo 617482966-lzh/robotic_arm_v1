@@ -1,0 +1,39 @@
+# 机械臂控制与六维力传感器采集界面 V3
+
+本目录以 `sensor_2_control_v2` 为基础创建。机械臂控制、位置记忆、贯入
+试验、剪切试验、图表和主题功能保持不变，传感器改为项目根目录中的
+`sensor_6/` 六维力/力矩传感器模块。
+
+## 启动
+
+从项目根目录运行：
+
+```powershell
+C:\Users\www61\anaconda3\envs\common\python.exe apps\sensor_6_control_v3\main.py
+```
+
+也可以进入本目录后运行：
+
+```powershell
+C:\Users\www61\anaconda3\envs\common\python.exe main.py
+```
+
+## 目录内容
+
+- `main.py`：主程序入口、六维采集线程、试验控制和 XLSX 保存；
+- `main_window_3.py`、`main_window_3.ui`：当前 V3 界面；
+- `main_window.py`、`main_window.ui`：V3 复用的基础窗口和图表功能；
+- `picture/`：窗口与界面使用的吉林大学图标。
+
+## 六维数据约定
+
+- 传感器原始通道顺序为 `Fx、Fy、Fz、Mx、My、Mz`；
+- 界面和导出文件将力矩通道显示为 `Tx、Ty、Tz`；
+- `Fx、Fy、Fz` 单位为 N，`Tx、Ty、Tz` 单位为 N·m；
+- 贯入试验以 `Fz` 绘图并判断力上限；
+- 剪切试验以 `Tz` 绘图并判断扭矩上限；
+- 两种试验的 XLSX 都保存起点置零后的全部六维数据，以及世界坐标和
+  J1～J6 关节角。
+
+界面提供 Fx、Fy、Fz、Tx、Ty、Tz 六个单通道清零按钮，以及一个全部
+清零按钮。底层 Modbus 参数和清零功能由根目录 `sensor_6/` 统一维护。
