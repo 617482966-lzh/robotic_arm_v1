@@ -22,17 +22,17 @@ from PySide6.QtWidgets import QApplication, QWidget
 from main_window import DARK_STYLE, MainWindow as BaseMainWindow
 
 
-UI_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    "main_window_3.ui",
+RESOURCE_DIR = os.path.abspath(
+    getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
 )
+UI_PATH = os.path.join(RESOURCE_DIR, "main_window_3.ui")
 LOGO_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
+    RESOURCE_DIR,
     "picture",
     "jlu.png",
 )
 WINDOWS_ICON_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
+    RESOURCE_DIR,
     "picture",
     "jlu.ico",
 )
@@ -136,6 +136,15 @@ QFrame#jointSectionLine {
 QWidget#robotActionContainer {
     background: transparent;
 }
+QPushButton#plotExperimentPageBtn:checked,
+QPushButton#plotWrenchPageBtn:checked,
+QPushButton#testStandardPageBtn:checked,
+QPushButton#testShovelPageBtn:checked {
+    background-color: #145c63;
+    border-color: #16a6ad;
+    color: #f4ffff;
+    font-weight: bold;
+}
 """
 
 LIGHT_STYLE = """
@@ -168,6 +177,7 @@ QPushButton#robotBtnPTP_zengliang, QPushButton#robotJointBtnPTP_zengliang { back
 QPushButton#robotBtnPTP_global, QPushButton#robotJointBtnPTP_global { background-color: #4676ae; border-color: #315e91; color: white; font-weight: bold; }
 QPushButton#testDispStart { background-color: #148c91; border-color: #08767b; color: white; font-weight: bold; }
 QPushButton#testShearStart { background-color: #c87116; border-color: #a85a0a; color: white; font-weight: bold; }
+QPushButton#testShovelStart { background-color: #7557a8; border-color: #60438f; color: white; font-weight: bold; }
 QPushButton#appExitBtn { background-color: #b64242; border-color: #962f2f; color: white; font-weight: bold; }
 QPushButton#themeToggleBtn { background-color: #526579; border-color: #3e5062; color: white; font-weight: bold; }
 QLabel#poseValue_X, QLabel#poseValue_Y, QLabel#poseValue_Z,
@@ -178,6 +188,10 @@ QGroupBox#robotPoseGroup, QGroupBox#robotJointGroup { border-color: #6f9eaa; }
 QGroupBox#robotJointGroup, QGroupBox#sensorConnGroup { margin-top: 12px; padding-top: 4px; }
 QFrame#jointSectionLine { color: #bdc8d2; background-color: #bdc8d2; max-height: 1px; }
 QWidget#robotActionContainer { background: transparent; }
+QPushButton#plotExperimentPageBtn:checked,
+QPushButton#plotWrenchPageBtn:checked,
+QPushButton#testStandardPageBtn:checked,
+QPushButton#testShovelPageBtn:checked { background-color: #148c91; border-color: #08767b; color: white; font-weight: bold; }
 """
 
 
@@ -265,25 +279,27 @@ class MainWindow(BaseMainWindow):
                 "muted": "#526474", "grid": "#c6d0da", "legend": "#f8fafc",
             }
         )
-        for figure, axes, canvas in (
-            (self.figure1, self.ax1, self.canvas1),
-            (self.figure2, self.ax2, self.canvas2),
+        for figure, axes_list, canvas in (
+            (self.figure1, (self.ax1,), self.canvas1),
+            (self.figure2, (self.ax2,), self.canvas2),
+            (self.figure3, (self.ax3_force, self.ax3_torque), self.canvas3),
         ):
             figure.set_facecolor(colors["figure"])
-            axes.set_facecolor(colors["axes"])
-            axes.title.set_color(colors["text"])
-            axes.xaxis.label.set_color(colors["muted"])
-            axes.yaxis.label.set_color(colors["muted"])
-            axes.tick_params(colors=colors["muted"])
-            axes.grid(True, alpha=0.35, color=colors["grid"])
-            for spine in axes.spines.values():
-                spine.set_color(colors["grid"])
-            legend = axes.get_legend()
-            if legend:
-                legend.get_frame().set_facecolor(colors["legend"])
-                legend.get_frame().set_edgecolor(colors["grid"])
-                for text in legend.get_texts():
-                    text.set_color(colors["text"])
+            for axes in axes_list:
+                axes.set_facecolor(colors["axes"])
+                axes.title.set_color(colors["text"])
+                axes.xaxis.label.set_color(colors["muted"])
+                axes.yaxis.label.set_color(colors["muted"])
+                axes.tick_params(colors=colors["muted"])
+                axes.grid(True, alpha=0.35, color=colors["grid"])
+                for spine in axes.spines.values():
+                    spine.set_color(colors["grid"])
+                legend = axes.get_legend()
+                if legend:
+                    legend.get_frame().set_facecolor(colors["legend"])
+                    legend.get_frame().set_edgecolor(colors["grid"])
+                    for text in legend.get_texts():
+                        text.set_color(colors["text"])
             canvas.setStyleSheet(f"background-color:{colors['figure']};")
             canvas.draw_idle()
 
@@ -302,6 +318,15 @@ class MainWindow(BaseMainWindow):
         # 复用连接、传感器、位置记忆、使能/回零/急停、试验和图表绑定。
         # 基类查找不到旧版 Jog/PTP 控件时会安全跳过。
         super()._connect_signals()
+
+        self._bind_stacked_navigation(
+            "plotStackedWidget",
+            ("plotExperimentPageBtn", "plotWrenchPageBtn"),
+        )
+        self._bind_stacked_navigation(
+            "testStackedWidget",
+            ("testStandardPageBtn", "testShovelPageBtn"),
+        )
 
         theme_button = self._find_child("themeToggleBtn")
         if theme_button:
@@ -358,6 +383,23 @@ class MainWindow(BaseMainWindow):
                 recall_button.clicked.connect(
                     lambda _checked=False, slot=index: self._recall_memory_slot(slot)
                 )
+
+    def _bind_stacked_navigation(self, stack_name, button_names):
+        stack = self._find_child(stack_name)
+        buttons = tuple(self._find_child(name) for name in button_names)
+        if stack is None or any(button is None for button in buttons):
+            raise RuntimeError(f"堆叠页面导航控件缺失: {stack_name}")
+
+        def activate(index):
+            stack.setCurrentIndex(index)
+            for button_index, button in enumerate(buttons):
+                button.setChecked(button_index == index)
+
+        for index, button in enumerate(buttons):
+            button.clicked.connect(
+                lambda _checked=False, page_index=index: activate(page_index)
+            )
+        activate(0)
 
     def _init_state(self):
         self._current_pose = (0.0,) * 6
@@ -607,7 +649,9 @@ class MainWindow(BaseMainWindow):
                 if button:
                     button.setFixedSize(64, 32)
 
-        for browse_name in ("testDispSaveBrowse", "testShearSaveBrowse"):
+        for browse_name in (
+            "testDispSaveBrowse", "testShearSaveBrowse", "testShovelSaveBrowse",
+        ):
             browse_button = self._find_child(browse_name)
             if browse_button:
                 browse_button.setFixedWidth(40)
@@ -617,7 +661,9 @@ class MainWindow(BaseMainWindow):
             "testDispSpeedLabel", "testDispDistLabel", "testForceMaxLabel",
             "testDispSaveLabel", "testDispNameLabel", "testAngSpeedLabel",
             "testAngDistLabel", "testTorqueMaxLabel", "testShearSaveLabel",
-            "testShearNameLabel",
+            "testShearNameLabel", "testShovelSpeedLabel",
+            "testShovelForceLabel", "testShovelSaveLabel",
+            "testShovelNameLabel",
         ):
             label = self._find_child(label_name)
             if label:
@@ -626,6 +672,7 @@ class MainWindow(BaseMainWindow):
         for input_name in (
             "testDispSpeed", "testDispDist", "testForceMax",
             "testAngSpeed", "testAngDist", "testTorqueMax",
+            "testShovelSpeed", "testShovelForceMax",
         ):
             input_widget = self._find_child(input_name)
             if input_widget:
@@ -634,12 +681,15 @@ class MainWindow(BaseMainWindow):
         for unit_name in (
             "testDispSpeedUnit", "testDispDistUnit", "testForceMaxUnit",
             "testAngSpeedUnit", "testAngDistUnit", "testTorqueMaxUnit",
+            "testShovelSpeedUnit", "testShovelForceUnit",
         ):
             unit = self._find_child(unit_name)
             if unit:
                 unit.setFixedWidth(48)
 
-        for path_name in ("testDispSavePath", "testShearSavePath"):
+        for path_name in (
+            "testDispSavePath", "testShearSavePath", "testShovelSavePath",
+        ):
             path_widget = self._find_child(path_name)
             if path_widget:
                 path_widget.setMinimumWidth(180)

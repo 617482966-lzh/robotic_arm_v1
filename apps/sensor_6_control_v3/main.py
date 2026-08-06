@@ -13,9 +13,15 @@ import ctypes
 from pathlib import Path
 
 # 归档应用可以直接从本目录启动；通信模块仍由项目根目录统一维护。
-APP_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = APP_DIR.parents[1]
-for module_path in (str(PROJECT_ROOT), str(APP_DIR)):
+IS_FROZEN = bool(getattr(sys, "frozen", False))
+BUNDLE_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+APP_DIR = (
+    Path(sys.executable).resolve().parent
+    if IS_FROZEN
+    else Path(__file__).resolve().parent
+)
+PROJECT_ROOT = BUNDLE_DIR if IS_FROZEN else APP_DIR.parents[1]
+for module_path in (str(PROJECT_ROOT), str(BUNDLE_DIR), str(APP_DIR)):
     if module_path not in sys.path:
         sys.path.insert(0, module_path)
 
@@ -267,7 +273,11 @@ class AppController:
         self._latest_joints = None
         self._latest_wrench = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         self._active_test = None
-        self._test_data = {"testDisp": [], "testShear": []}
+        self._test_data = {
+            "testDisp": [],
+            "testShear": [],
+            "testShovel": [],
+        }
         self._export_workers = set()
 
         self._sample_timer = QTimer(self.window)
@@ -323,9 +333,17 @@ class AppController:
         self.window.plot_ang_show.connect(lambda: self.window.set_plot_visible(1, True))
         self.window.plot_ang_close.connect(lambda: self.window.set_plot_visible(1, False))
         self.window.plot_ang_reset.connect(lambda: self.window.reset_plot(1))
+        self.window.plot_wrench_show.connect(
+            lambda: self.window.set_wrench_plot_visible(True)
+        )
+        self.window.plot_wrench_close.connect(
+            lambda: self.window.set_wrench_plot_visible(False)
+        )
+        self.window.plot_wrench_reset.connect(self.window.reset_wrench_plot)
 
         self.window.disp_test_start.connect(self._on_disp_test_start)
         self.window.shear_test_start.connect(self._on_shear_test_start)
+        self.window.shovel_test_start.connect(self._on_shovel_test_start)
         self.window.test_save_requested.connect(self._save_test_data)
         self.window.test_reset_requested.connect(self._reset_test_data)
 
@@ -346,10 +364,22 @@ class AppController:
         if not self._can_start_test("剪切"):
             return
         speed, angle, max_torque = map(float, self.window.get_test_params_shear())
+        if abs(angle) < 1e-9:
+            self.window.statusBar().showMessage("剪切角位移不能为0", 5000)
+            return
         self._begin_test("testShear", angle, max_torque)
         self._submit_robot("joint_increment", (0, 0, 0, 0, 0, angle), speed)
         self.window.statusBar().showMessage(
             f"剪切试验已启动：J6 {angle:g} deg，{speed:g} deg/s，扭矩阈值{max_torque:g} N·m", 5000
+        )
+
+    def _on_shovel_test_start(self):
+        """铲挖页先保留参数入口，轨迹明确前不发送机械臂运动。"""
+        speed, max_force = map(float, self.window.get_test_params_shovel())
+        self.window.statusBar().showMessage(
+            "铲挖试验页面已就绪，但尚未定义运动轨迹、位移距离和结束位置；"
+            f"当前参数为{speed:g} mm/s、{max_force:g} N，本次未发送机械臂指令。",
+            12000,
         )
 
     def _can_start_test(self, label):
@@ -424,10 +454,11 @@ class AppController:
             step = self._shortest_angle_delta(joints[5], state["previous_j6"])
             state["accumulated_j6"] += step
             state["previous_j6"] = joints[5]
-            angle = max(0.0, state["sign"] * state["accumulated_j6"])
+            progress = max(0.0, state["sign"] * state["accumulated_j6"])
+            angle = state["sign"] * progress
             depth = 0.0
             self.window.add_ang_torque(angle, tz)
-            reached = angle >= state["target"] - 0.1
+            reached = progress >= state["target"] - 0.1
             overloaded = abs(self._latest_wrench[5]) >= state["limit"]
             reason = "达到目标角位移" if reached else "达到最大扭矩"
 
@@ -459,7 +490,11 @@ class AppController:
         if clear_on_stop:
             self._test_data[kind].clear()
             self.window.reset_plot(0 if kind == "testDisp" else 1)
-        label = "贯入" if kind == "testDisp" else "剪切"
+        label = {
+            "testDisp": "贯入",
+            "testShear": "剪切",
+            "testShovel": "铲挖",
+        }.get(kind, "试验")
         self.window.statusBar().showMessage(
             f"{label}试验结束：{reason}；机械臂保持使能", 12000
         )
@@ -470,7 +505,12 @@ class AppController:
             self._finish_active_test("用户重置", send_stop=True)
             return
         self._test_data[kind].clear()
-        self.window.reset_plot(0 if kind == "testDisp" else 1)
+        if kind == "testDisp":
+            self.window.reset_plot(0)
+        elif kind == "testShear":
+            self.window.reset_plot(1)
+        else:
+            self.window.reset_wrench_plot()
         self.window.statusBar().showMessage("试验数据和曲线已清空", 3000)
 
     def _save_test_data(self, kind, filepath):
@@ -506,13 +546,21 @@ class AppController:
                 (row[0], row[1], *row[3:9], *row[9:])
                 for row in rows
             )
-        else:
+        elif kind == "testShear":
             headers = (
                 "时间戳/ms", "角位移/deg", *wrench_headers,
                 *common_headers,
             )
             rows = tuple(
                 (row[0], row[2], *row[3:9], *row[9:])
+                for row in rows
+            )
+        else:
+            headers = (
+                "时间戳/ms", *wrench_headers, *common_headers,
+            )
+            rows = tuple(
+                (row[0], *row[3:9], *row[9:])
                 for row in rows
             )
         return headers, rows
@@ -603,6 +651,7 @@ class AppController:
             float(value) for value in (fx, fy, fz, tx, ty, tz)
         )
         self.window.update_force_torque(*self._latest_wrench)
+        self.window.add_wrench_sample(*self._latest_wrench)
         # 直接在20 Hz传感器数据到达时检查阈值，避免再等待GUI采样定时器，
         # 最坏可减少约50 ms的停止判定延迟。
         state = self._active_test
@@ -767,9 +816,14 @@ def _stop_child(process):
 
 
 def _run_gui_child(env, ready_file, timeout):
+    command = (
+        [sys.executable]
+        if IS_FROZEN
+        else [sys.executable, str(Path(__file__).resolve())]
+    )
     process = subprocess.Popen(
-        [sys.executable, str(Path(__file__).resolve())],
-        cwd=str(Path(__file__).resolve().parent),
+        command,
+        cwd=str(APP_DIR),
         env=env,
     )
     deadline = time.monotonic() + timeout

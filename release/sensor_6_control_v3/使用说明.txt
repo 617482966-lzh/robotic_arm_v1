@@ -1,0 +1,18 @@
+机械臂控制与六维力传感器采集系统 V3
+
+启动方式
+1. 双击 sensor_6_control_v3.exe。
+2. 程序文件夹中的 _internal 目录是运行依赖，不能删除或移动。
+3. 复制到其他电脑时，请复制整个 sensor_6_control_v3 文件夹，不能只复制 EXE。
+
+硬件参数
+- 机械臂 IP 和端口在界面中填写。
+- 六维力传感器串口参数由 sensor_6 模块管理，默认使用 COM6、115200、8N1、Modbus-RTU、从站地址 1。
+
+重新打包
+在项目根目录执行：
+C:\Users\www61\anaconda3\envs\common\python.exe -m PyInstaller --clean --noconfirm --distpath release --workpath "%TEMP%\pyinstaller_sensor_6_control_v3_work" apps\sensor_6_control_v3\sensor_6_control_v3.spec
+
+注意
+- 数据保存目录默认为当前用户桌面。
+- 本发布目录约 206 MB，包含 PySide6、Matplotlib、OpenPyXL 和串口通信所需依赖。

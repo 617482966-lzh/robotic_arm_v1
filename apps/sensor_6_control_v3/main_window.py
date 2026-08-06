@@ -2,6 +2,7 @@
 """机械臂控制与力传感数据采集 GUI - PySide6 + Matplotlib + .ui"""
 
 import os
+import sys
 import time
 from datetime import datetime
 
@@ -47,6 +48,8 @@ QPushButton#testDispStart { background-color: #1a5a5a; border-color: #14a3a8; fo
 QPushButton#testDispStart:hover { background-color: #1a7a7a; }
 QPushButton#testShearStart { background-color: #5a3a1a; border-color: #e67e22; font-weight: bold; }
 QPushButton#testShearStart:hover { background-color: #7a5a1a; }
+QPushButton#testShovelStart { background-color: #514071; border-color: #8e72d4; font-weight: bold; }
+QPushButton#testShovelStart:hover { background-color: #66518e; }
 QLineEdit { background-color: #12122a; color: #e0e0e0; border: 1px solid #3a3a52; border-radius: 4px; padding: 4px 8px; font-size: 13px; }
 QLineEdit:focus { border-color: #14a3a8; }
 QDoubleSpinBox, QSpinBox { background-color: #12122a; color: #e0e0e0; border: 1px solid #3a3a52; border-radius: 4px; padding: 4px 6px; font-size: 13px; }
@@ -69,13 +72,16 @@ QScrollBar::handle:vertical:hover { background: #14a3a8; }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
 QSplitter::handle { background: #2a2a40; width: 3px; }
 QFrame#saveBar { background-color: #252538; border-radius: 4px; padding: 6px; }
-QFrame#plotPlaceholder1 { background-color: #1c1c2e; border: 1px solid #3a3a52; border-radius: 4px; }
+QFrame#plotPlaceholder1, QFrame#plotPlaceholder2, QFrame#plotPlaceholder3 { background-color: #1c1c2e; border: 1px solid #3a3a52; border-radius: 4px; }
 """
 
 LIGHT_ON = "background-color:#00c853;border-radius:6px;min-width:12px;max-width:12px;min-height:12px;max-height:12px;"
 LIGHT_OFF = "background-color:#ff5252;border-radius:6px;min-width:12px;max-width:12px;min-height:12px;max-height:12px;"
 
-UI_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "main_window.ui")
+RESOURCE_DIR = os.path.abspath(
+    getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+)
+UI_PATH = os.path.join(RESOURCE_DIR, "main_window.ui")
 
 
 class MainWindow(QMainWindow):
@@ -101,6 +107,7 @@ class MainWindow(QMainWindow):
     sensor_zero_channel_requested = Signal(int)
     disp_test_start = Signal()                       # 贯入试验启动
     shear_test_start = Signal()                      # 剪切试验启动
+    shovel_test_start = Signal()                     # 铲挖试验入口
     save_data_requested = Signal(str)
     test_save_requested = Signal(str, str)           # test kind, xlsx path
     test_reset_requested = Signal(str)               # test kind
@@ -111,6 +118,9 @@ class MainWindow(QMainWindow):
     plot_ang_show = Signal()
     plot_ang_close = Signal()
     plot_ang_reset = Signal()
+    plot_wrench_show = Signal()
+    plot_wrench_close = Signal()
+    plot_wrench_reset = Signal()
 
     def __init__(self):
         super().__init__()
@@ -190,8 +200,55 @@ class MainWindow(QMainWindow):
                 p2.hide()
                 parent_layout.insertWidget(idx, self.canvas2)
 
+        # Figure 3: six-axis wrench over time (force and torque use separate axes).
+        self.figure3 = Figure(figsize=(8, 7), dpi=100, facecolor="#1c1c2e")
+        self.ax3_force = self.figure3.add_subplot(2, 1, 1)
+        self.ax3_torque = self.figure3.add_subplot(2, 1, 2, sharex=self.ax3_force)
+        self.ax3_force.set_title(
+            "六维力实时曲线  Six-axis Force/Torque",
+            color="#c8ccd4", fontsize=12, fontweight="bold",
+        )
+        self.ax3_force.set_ylabel("力 Force (N)", color="#a0a4b0")
+        self.ax3_torque.set_ylabel("力矩 Torque (N·m)", color="#a0a4b0")
+        self.ax3_torque.set_xlabel("时间 Time (s)", color="#a0a4b0")
+        for axes in (self.ax3_force, self.ax3_torque):
+            axes.set_facecolor("#12122a")
+            axes.grid(True, alpha=0.25, color="#3a3a52")
+            axes.tick_params(colors="#a0a4b0")
+            for spine in axes.spines.values():
+                spine.set_color("#3a3a52")
+        force_colors = ("#ef5350", "#66bb6a", "#42a5f5")
+        torque_colors = ("#ab47bc", "#ffa726", "#26c6da")
+        self.wrench_lines = {}
+        for name, color in zip(("Fx", "Fy", "Fz"), force_colors):
+            self.wrench_lines[name], = self.ax3_force.plot(
+                [], [], color, linewidth=1.3, label=name
+            )
+        for name, color in zip(("Tx", "Ty", "Tz"), torque_colors):
+            self.wrench_lines[name], = self.ax3_torque.plot(
+                [], [], color, linewidth=1.3, label=name
+            )
+        for axes in (self.ax3_force, self.ax3_torque):
+            axes.legend(
+                loc="upper left", ncol=3, facecolor="#1c1c2e",
+                edgecolor="#3a3a52", labelcolor="#c8ccd4", fontsize=9,
+            )
+        self.figure3.tight_layout(pad=2.0)
+        self.canvas3 = FigureCanvas(self.figure3)
+        self.canvas3.setStyleSheet("background-color:#1c1c2e;")
+        p3 = self._find_child("plotPlaceholder3")
+        if p3:
+            parent_layout = p3.parentWidget().layout()
+            idx = parent_layout.indexOf(p3)
+            if idx >= 0:
+                parent_layout.removeWidget(p3)
+                p3.hide()
+                parent_layout.insertWidget(idx, self.canvas3)
+
         self._disp_data = []
         self._ang_data = []
+        self._wrench_data = []
+        self._wrench_time_origin = time.monotonic()
     def _apply_style(self):
         self.setStyleSheet(DARK_STYLE)
 
@@ -284,20 +341,25 @@ class MainWindow(QMainWindow):
         if btn: btn.clicked.connect(self.disp_test_start.emit)
         btn = self._find_child("testShearStart")
         if btn: btn.clicked.connect(self.shear_test_start.emit)
+        btn = self._find_child("testShovelStart")
+        if btn: btn.clicked.connect(self.shovel_test_start.emit)
 
         # Refresh button
         btn_refresh = self._find_child("sensorRefreshBtn")
         if btn_refresh: btn_refresh.clicked.connect(self.sensor_refresh_requested.emit)
 
         # Plot control buttons
-        for prefix, sigs in [("plotDisp", (self.plot_disp_show, self.plot_disp_close, self.plot_disp_reset)),
-                            ("plotAng", (self.plot_ang_show, self.plot_ang_close, self.plot_ang_reset))]:
+        for prefix, sigs in [
+            ("plotDisp", (self.plot_disp_show, self.plot_disp_close, self.plot_disp_reset)),
+            ("plotAng", (self.plot_ang_show, self.plot_ang_close, self.plot_ang_reset)),
+            ("plotWrench", (self.plot_wrench_show, self.plot_wrench_close, self.plot_wrench_reset)),
+        ]:
             for suffix, sig in zip(["Show", "Close", "Reset"], sigs):
                 btn = self._find_child(f"{prefix}{suffix}")
                 if btn: btn.clicked.connect(sig.emit)
 
         # Test save/reset/browse
-        for prefix in ["testDisp", "testShear"]:
+        for prefix in ["testDisp", "testShear", "testShovel"]:
             btn_browse = self._find_child(f"{prefix}SaveBrowse")
             if btn_browse: btn_browse.clicked.connect(lambda c, p=prefix: self._on_test_browse(p))
             btn_save = self._find_child(f"{prefix}Save")
@@ -308,7 +370,7 @@ class MainWindow(QMainWindow):
             )
 
     def _init_state(self):
-        self._last_plot_draw = [0.0, 0.0]
+        self._last_plot_draw = [0.0, 0.0, 0.0]
         self._plot_draw_interval = 0.10  # 数据保持20 Hz，图形限制为10 FPS。
         for name in ["robotStatusLight", "sensorStatusLight"]:
             w = self._find_child(name)
@@ -317,7 +379,7 @@ class MainWindow(QMainWindow):
         desktop_path = QStandardPaths.writableLocation(
             QStandardPaths.StandardLocation.DesktopLocation
         ) or os.path.join(os.path.expanduser("~"), "Desktop")
-        for prefix in ["testDisp", "testShear"]:
+        for prefix in ["testDisp", "testShear", "testShovel"]:
             sp = self._find_child(f"{prefix}SavePath")
             if sp: sp.setText(desktop_path)
 
@@ -368,7 +430,11 @@ class MainWindow(QMainWindow):
         name = name_edit.text().strip() if name_edit else "01"
         if not name: name = "01"
         suffix = name.zfill(2) if name.isdigit() else name
-        fixed_prefix = "pen_motor" if prefix == "testDisp" else "cut_motor"
+        fixed_prefix = {
+            "testDisp": "pen_motor",
+            "testShear": "cut_motor",
+            "testShovel": "shovel_motor",
+        }.get(prefix, "test_motor")
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filepath = os.path.join(save_dir, f"{fixed_prefix}_{timestamp}_{suffix}.xlsx")
         self.test_save_requested.emit(prefix, filepath)
@@ -468,6 +534,15 @@ class MainWindow(QMainWindow):
             torque_max.value() if torque_max else 5.0,
         )
 
+    def get_test_params_shovel(self):
+        """Returns (linear_speed, max_force) for the shovel-test page."""
+        speed = self._find_child("testShovelSpeed")
+        force_max = self._find_child("testShovelForceMax")
+        return (
+            speed.value() if speed else 10.0,
+            force_max.value() if force_max else 10.0,
+        )
+
     # ---- Plot data ----
     def add_disp_force(self, displacement, force):
         self._disp_data.append((displacement, force))
@@ -480,6 +555,43 @@ class MainWindow(QMainWindow):
         if len(self._ang_data) > 5000:
             self._ang_data = self._ang_data[-5000:]
         self._refresh_plot(1)
+
+    def add_wrench_sample(self, fx, fy, fz, tx, ty, tz, timestamp=None):
+        if timestamp is None:
+            timestamp = time.monotonic() - self._wrench_time_origin
+        self._wrench_data.append(
+            (float(timestamp), fx, fy, fz, tx, ty, tz)
+        )
+        if len(self._wrench_data) > 5000:
+            self._wrench_data = self._wrench_data[-5000:]
+        self._refresh_wrench_plot()
+
+    def _refresh_wrench_plot(self, force=False):
+        now = time.monotonic()
+        if not force and now - self._last_plot_draw[2] < self._plot_draw_interval:
+            return
+        self._last_plot_draw[2] = now
+        if self._wrench_data:
+            columns = tuple(zip(*self._wrench_data))
+            times = columns[0]
+            for index, name in enumerate(("Fx", "Fy", "Fz", "Tx", "Ty", "Tz"), 1):
+                self.wrench_lines[name].set_data(times, columns[index])
+        else:
+            for line in self.wrench_lines.values():
+                line.set_data([], [])
+        for axes in (self.ax3_force, self.ax3_torque):
+            axes.relim()
+            axes.autoscale_view()
+        if self.canvas3.isVisible():
+            self.canvas3.draw_idle()
+
+    def set_wrench_plot_visible(self, visible):
+        self.canvas3.setVisible(bool(visible))
+
+    def reset_wrench_plot(self):
+        self._wrench_data.clear()
+        self._wrench_time_origin = time.monotonic()
+        self._refresh_wrench_plot(force=True)
 
     def _refresh_plot(self, ax_index, force=False):
         """合并高频重绘；采集和保存仍保留全部20 Hz数据点。"""
@@ -521,12 +633,19 @@ class MainWindow(QMainWindow):
     def clear_plots(self):
         self._disp_data.clear()
         self._ang_data.clear()
+        self._wrench_data.clear()
+        self._wrench_time_origin = time.monotonic()
         self.line1.set_data([], [])
         self.line2.set_data([], [])
+        for line in self.wrench_lines.values():
+            line.set_data([], [])
         self.ax1.relim(); self.ax1.autoscale_view()
         self.ax2.relim(); self.ax2.autoscale_view()
+        self.ax3_force.relim(); self.ax3_force.autoscale_view()
+        self.ax3_torque.relim(); self.ax3_torque.autoscale_view()
         self.canvas1.draw_idle()
         self.canvas2.draw_idle()
+        self.canvas3.draw_idle()
 
     def save_figure(self, filepath):
         self.figure1.savefig(filepath, dpi=150, bbox_inches="tight",

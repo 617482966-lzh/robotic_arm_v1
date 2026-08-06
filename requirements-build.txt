@@ -1,0 +1,4 @@
+# Build the Windows executable with Python 3.12.
+-r requirements.txt
+PyInstaller==6.21.0
+
