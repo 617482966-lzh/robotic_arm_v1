@@ -3782,35 +3782,38 @@
                 </layout>
                </item>
                <item>
-                <layout class="QHBoxLayout" name="testShovelForceRow">
+                <layout class="QHBoxLayout" name="testShovelDepthRow">
                  <item>
-                  <widget class="QLabel" name="testShovelForceLabel">
+                  <widget class="QLabel" name="testShovelDepthLabel">
                    <property name="text">
-                    <string>力最大值:</string>
+                    <string>挖掘深度:</string>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QDoubleSpinBox" name="testShovelForceMax">
+                  <widget class="QDoubleSpinBox" name="testShovelDepth">
                    <property name="minimumSize">
                     <size>
                      <width>90</width>
                      <height>0</height>
                     </size>
                    </property>
+                   <property name="decimals">
+                    <number>2</number>
+                   </property>
                    <property name="minimum">
-                    <double>0.100000000000000</double>
+                    <double>0.000000000000000</double>
                    </property>
                    <property name="maximum">
-                    <double>500.000000000000000</double>
+                    <double>1000.000000000000000</double>
                    </property>
                    <property name="value">
-                    <double>10.000000000000000</double>
+                    <double>100.000000000000000</double>
                    </property>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QLabel" name="testShovelForceUnit">
+                  <widget class="QLabel" name="testShovelDepthUnit">
                    <property name="minimumSize">
                     <size>
                      <width>40</width>
@@ -3818,7 +3821,53 @@
                     </size>
                    </property>
                    <property name="text">
-                    <string>N</string>
+                    <string>mm</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="testShovelAngleRow">
+                 <item>
+                  <widget class="QLabel" name="testShovelAngleLabel">
+                   <property name="text">
+                    <string>推土角度:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QDoubleSpinBox" name="testShovelAngle">
+                   <property name="minimumSize">
+                    <size>
+                     <width>90</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="decimals">
+                    <number>2</number>
+                   </property>
+                   <property name="minimum">
+                    <double>0.000000000000000</double>
+                   </property>
+                   <property name="maximum">
+                    <double>90.000000000000000</double>
+                   </property>
+                   <property name="value">
+                    <double>30.000000000000000</double>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="testShovelAngleUnit">
+                   <property name="minimumSize">
+                    <size>
+                     <width>40</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>deg</string>
                    </property>
                   </widget>
                  </item>

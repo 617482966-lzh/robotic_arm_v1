@@ -21,7 +21,6 @@ apps/sensor_6_control_v3/sensor_6_control_v3.spec
 
 - `apps/sensor_6_control_v3/main.py`
 - `apps/sensor_6_control_v3/main_window_3.py`
-- `apps/sensor_6_control_v3/main_window.py`
 - `robot_client/robot_control.py`
 - `robot_client/hc1_json.py`
 - `sensor_6/communication.py`
@@ -30,7 +29,6 @@ apps/sensor_6_control_v3/sensor_6_control_v3.spec
 同时打包以下界面资源：
 
 - `apps/sensor_6_control_v3/main_window_3.ui`
-- `apps/sensor_6_control_v3/main_window.ui`
 - `apps/sensor_6_control_v3/picture/jlu.png`
 - `apps/sensor_6_control_v3/picture/jlu.ico`
 
@@ -132,6 +130,7 @@ Build complete! The results are available in: ...\release
 release/
 └─ sensor_6_control_v3/
    ├─ sensor_6_control_v3.exe
+   ├─ sensor_6_control_v3.ini  （首次运行后生成）
    ├─ 使用说明.txt
    └─ _internal/
 ```
@@ -139,6 +138,11 @@ release/
 发布到其他电脑时必须复制整个 `sensor_6_control_v3` 文件夹。
 `_internal` 中包含 PySide6、Matplotlib、Python、串口模块和底层 DLL，
 不能只复制 EXE，也不能修改 `_internal` 的相对位置。
+
+V3 的 P1～P5 位置记忆和九个试验参数保存在 EXE 同级的
+`sensor_6_control_v3.ini`。迁移到其他电脑时应一起复制该文件。
+PyInstaller 的 `--noconfirm` 会重建同名发布目录，因此再次打包前应先
+备份已有 INI，打包完成后再放回 EXE 同级目录。
 
 目标电脑不需要安装 Python，但仍需要：
 
@@ -251,4 +255,3 @@ Python 源码修改不会自动进入旧 EXE。每次修改下列内容后都需
 
 新增 Conda 底层 DLL 时，需要把 DLL 名称加入 `.spec` 的
 `required_dlls`。完成修改后必须重新执行构建和启动检查。
-

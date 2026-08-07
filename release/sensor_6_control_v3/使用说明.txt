@@ -4,6 +4,7 @@
 1. 双击 sensor_6_control_v3.exe。
 2. 程序文件夹中的 _internal 目录是运行依赖，不能删除或移动。
 3. 复制到其他电脑时，请复制整个 sensor_6_control_v3 文件夹，不能只复制 EXE。
+4. 重新打包新版后，P1-P5 位置记忆和试验参数将保存在 EXE 同级的 sensor_6_control_v3.ini；迁移或更新软件前请备份该文件。
 
 硬件参数
 - 机械臂 IP 和端口在界面中填写。

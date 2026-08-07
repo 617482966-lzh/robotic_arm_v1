@@ -1,0 +1,5 @@
+# Per-application runtime settings contain machine/user-specific memories.
+apps/sensor_2_control_v2/sensor_2_control_v2.ini
+apps/sensor_6_control_v3/sensor_6_control_v3.ini
+release/**/sensor_2_control_v2.ini
+release/**/sensor_6_control_v3.ini

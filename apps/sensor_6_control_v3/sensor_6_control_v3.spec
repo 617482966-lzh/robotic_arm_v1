@@ -27,7 +27,6 @@ binaries = [
 
 datas = [
     (str(app_dir / "main_window_3.ui"), "."),
-    (str(app_dir / "main_window.ui"), "."),
     (str(app_dir / "使用说明.txt"), "."),
     (str(app_dir / "picture" / "jlu.png"), "picture"),
     (str(app_dir / "picture" / "jlu.ico"), "picture"),

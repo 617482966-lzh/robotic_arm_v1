@@ -375,10 +375,11 @@ class AppController:
 
     def _on_shovel_test_start(self):
         """铲挖页先保留参数入口，轨迹明确前不发送机械臂运动。"""
-        speed, max_force = map(float, self.window.get_test_params_shovel())
+        speed, depth, angle = map(float, self.window.get_test_params_shovel())
         self.window.statusBar().showMessage(
-            "铲挖试验页面已就绪，但尚未定义运动轨迹、位移距离和结束位置；"
-            f"当前参数为{speed:g} mm/s、{max_force:g} N，本次未发送机械臂指令。",
+            "铲挖试验页面已就绪，但尚未定义运动轨迹和结束位置；"
+            f"当前参数为{speed:g} mm/s、挖掘深度{depth:g} mm、"
+            f"推土角度{angle:g} deg，本次未发送机械臂指令。",
             12000,
         )
 

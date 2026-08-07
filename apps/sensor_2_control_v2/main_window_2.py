@@ -22,6 +22,12 @@ from PySide6.QtWidgets import QApplication, QWidget
 from main_window import DARK_STYLE, MainWindow as BaseMainWindow
 
 
+APPLICATION_DIR = os.path.abspath(
+    os.path.dirname(sys.executable)
+    if getattr(sys, "frozen", False)
+    else os.path.dirname(os.path.abspath(__file__))
+)
+SETTINGS_PATH = os.path.join(APPLICATION_DIR, "sensor_2_control_v2.ini")
 UI_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     "main_window_2.ui",
@@ -365,7 +371,11 @@ class MainWindow(BaseMainWindow):
         self._memory_slots = {
             1: PositionMemory("joint", (0.0, 16.0, -25.0, 0.0, 9.0, 0.0))
         }
-        self._memory_settings = QSettings("JLU", "RoboticArmV1")
+        self._memory_settings = QSettings(
+            SETTINGS_PATH,
+            QSettings.Format.IniFormat,
+        )
+        self._migrate_legacy_registry_settings()
         self._load_memory_slots()
         super()._init_state()
         self._configure_control_geometry()
@@ -872,6 +882,21 @@ class MainWindow(BaseMainWindow):
             self._memory_slots = restored
         except (KeyError, TypeError, ValueError, json.JSONDecodeError):
             return
+
+    def _migrate_legacy_registry_settings(self):
+        """首次运行时把旧版注册表位置记忆复制到 V2 独立 INI 文件。"""
+        marker = "meta/legacy_registry_imported"
+        if self._memory_settings.value(marker, False, type=bool):
+            return
+
+        legacy = QSettings("JLU", "RoboticArmV1")
+        for key in legacy.allKeys():
+            if not key.startswith("position_memory/"):
+                continue
+            if not self._memory_settings.contains(key):
+                self._memory_settings.setValue(key, legacy.value(key))
+        self._memory_settings.setValue(marker, True)
+        self._memory_settings.sync()
 
     def _save_memory_slots(self):
         payload = {

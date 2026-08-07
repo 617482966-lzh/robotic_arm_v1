@@ -27,3 +27,12 @@ C:\Users\www61\anaconda3\envs\common\python.exe apps\sensor_2_control_v2\main.py
 本应用继续调用项目根目录中的 `robot_client/` 和 `sensor_2/`，因此通信
 代码只维护一份。以后新增其他控制程序时，在 `apps/` 下新建独立目录，
 并把该程序的入口、界面代码和 `.ui` 文件放在同一目录即可。
+
+## 设置记忆
+
+P1～P5 位置记忆保存在本目录的 `sensor_2_control_v2.ini`。如果以后
+单独打包 V2，则 INI 位于 V2 EXE 同级目录。该文件只属于 V2，不与 V3
+共用。
+
+首次运行新版时会从旧的 Windows 注册表导入已有位置记忆，之后只使用
+V2 自己的 INI 文件。
