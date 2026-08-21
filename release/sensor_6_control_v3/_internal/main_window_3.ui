@@ -2816,13 +2816,13 @@
      <widget class="QScrollArea" name="sensorScrollArea">
       <property name="minimumSize">
        <size>
-        <width>330</width>
+        <width>390</width>
         <height>0</height>
        </size>
       </property>
       <property name="maximumSize">
        <size>
-        <width>370</width>
+        <width>450</width>
         <height>16777215</height>
        </size>
       </property>
@@ -2837,7 +2837,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>339</width>
+         <width>399</width>
          <height>844</height>
         </rect>
        </property>
@@ -3782,46 +3782,81 @@
                 </layout>
                </item>
                <item>
-                <layout class="QHBoxLayout" name="testShovelForceRow">
-                 <item>
-                  <widget class="QLabel" name="testShovelForceLabel">
-                   <property name="text">
-                    <string>力最大值:</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QDoubleSpinBox" name="testShovelForceMax">
-                   <property name="minimumSize">
-                    <size>
-                     <width>90</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                   <property name="minimum">
-                    <double>0.100000000000000</double>
-                   </property>
-                   <property name="maximum">
-                    <double>500.000000000000000</double>
-                   </property>
-                   <property name="value">
-                    <double>10.000000000000000</double>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QLabel" name="testShovelForceUnit">
-                   <property name="minimumSize">
-                    <size>
-                     <width>40</width>
-                     <height>0</height>
-                    </size>
-                   </property>
-                   <property name="text">
-                    <string>N</string>
-                   </property>
-                  </widget>
-                 </item>
+                <layout class="QHBoxLayout" name="testShovelBRow">
+                 <property name="spacing"><number>4</number></property>
+                 <item><widget class="QLabel" name="testShovelBLabel"><property name="text"><string>B点增量:</string></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelB_XLabel"><property name="text"><string>X</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelB_X"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelB_YLabel"><property name="text"><string>Y</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelB_Y"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelB_ZLabel"><property name="text"><string>Z</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelB_Z"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelBUnit"><property name="text"><string>mm</string></property></widget></item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="testShovelCRow">
+                 <property name="spacing"><number>4</number></property>
+                 <item><widget class="QLabel" name="testShovelCLabel"><property name="text"><string>C点增量:</string></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelC_XLabel"><property name="text"><string>X</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelC_X"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelC_YLabel"><property name="text"><string>Y</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelC_Y"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelC_ZLabel"><property name="text"><string>Z</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelC_Z"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelCUnit"><property name="text"><string>mm</string></property></widget></item>
+                </layout>
+               </item>
+               <item>
+               <layout class="QHBoxLayout" name="testShovelDRow">
+                 <property name="spacing"><number>4</number></property>
+                 <item><widget class="QLabel" name="testShovelDLabel"><property name="text"><string>D点增量:</string></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelD_XLabel"><property name="text"><string>X</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelD_X"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelD_YLabel"><property name="text"><string>Y</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelD_Y"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelD_ZLabel"><property name="text"><string>Z</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelD_Z"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelDUnit"><property name="text"><string>mm</string></property></widget></item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="testShovelERow">
+                 <property name="spacing"><number>4</number></property>
+                 <item><widget class="QLabel" name="testShovelELabel"><property name="text"><string>E点增量:</string></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelE_XLabel"><property name="text"><string>X</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelE_X"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelE_YLabel"><property name="text"><string>Y</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelE_Y"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelE_ZLabel"><property name="text"><string>Z</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelE_Z"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelEUnit"><property name="text"><string>mm</string></property></widget></item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="testShovelFRow">
+                 <property name="spacing"><number>4</number></property>
+                 <item><widget class="QLabel" name="testShovelFLabel"><property name="text"><string>F点增量:</string></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelF_XLabel"><property name="text"><string>X</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelF_X"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelF_YLabel"><property name="text"><string>Y</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelF_Y"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelF_ZLabel"><property name="text"><string>Z</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelF_Z"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelFUnit"><property name="text"><string>mm</string></property></widget></item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="testShovelGRow">
+                 <property name="spacing"><number>4</number></property>
+                 <item><widget class="QLabel" name="testShovelGLabel"><property name="text"><string>G点增量:</string></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelG_XLabel"><property name="text"><string>X</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelG_X"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelG_YLabel"><property name="text"><string>Y</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelG_Y"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelG_ZLabel"><property name="text"><string>Z</string></property></widget></item>
+                 <item><widget class="QDoubleSpinBox" name="testShovelG_Z"><property name="decimals"><number>3</number></property><property name="minimum"><double>-1000.000000000000000</double></property><property name="maximum"><double>1000.000000000000000</double></property></widget></item>
+                 <item><widget class="QLabel" name="testShovelGUnit"><property name="text"><string>mm</string></property></widget></item>
                 </layout>
                </item>
                <item>

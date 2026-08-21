@@ -255,3 +255,17 @@ Python 源码修改不会自动进入旧 EXE。每次修改下列内容后都需
 
 新增 Conda 底层 DLL 时，需要把 DLL 名称加入 `.spec` 的
 `required_dlls`。完成修改后必须重新执行构建和启动检查。
+
+## 9. 2026-08-14 当前正式构建
+
+- 入口：`apps/sensor_6_control_v3/main.py`；
+- Python：3.12.12；PyInstaller：6.21.0；
+- EXE：`release/sensor_6_control_v3/sensor_6_control_v3.exe`；
+- 大小：13,078,825 字节；
+- SHA256：`6F60DA17E3E2EF1D00F7EBCBEB72A459F15AD83017EEE2EEF431C0B3D0C89E1C`；
+- 已验证发布 UI 与源码一致、B～G 铲挖点存在，并通过窗口启动测试。
+
+若 OneDrive 给旧 `_internal` 目录附加只读重解析属性，PyInstaller 的
+`--noconfirm` 可能在删除旧目录时报 `WinError 5`。此时先输出到新的临时
+`distpath`，再用 PowerShell 将完整 EXE 和 `_internal` 覆盖到正式目录；
+覆盖前后都应备份并恢复 `sensor_6_control_v3.ini`。

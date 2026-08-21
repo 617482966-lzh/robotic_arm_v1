@@ -31,7 +31,7 @@ from openpyxl import Workbook
 from PySide6.QtWidgets import QApplication
 from PySide6.QtCore import Qt, QThread, QTimer, Signal
 
-from main_window_3 import MainWindow
+from main_window_3 import MainWindow, SHOVEL_POINTS
 
 from sensor_6.communication import SensorCommunication
 from sensor_6.controller import SensorController
@@ -39,6 +39,7 @@ from robot_client.robot_control import BorunteRobot as RobotComm
 
 
 SAMPLE_INTERVAL_MS = 50  # 20 Hz
+SHOVEL_ARRIVAL_CONFIRM_SAMPLES = 2
 GUI_READY_TIMEOUT_SECONDS = 10.0
 GUI_CHILD_ENV = "ROBOTIC_ARM_GUI_CHILD"
 GUI_READY_FILE_ENV = "ROBOTIC_ARM_GUI_READY_FILE"
@@ -374,14 +375,112 @@ class AppController:
         )
 
     def _on_shovel_test_start(self):
-        """铲挖页先保留参数入口，轨迹明确前不发送机械臂运动。"""
-        speed, depth, angle = map(float, self.window.get_test_params_shovel())
-        self.window.statusBar().showMessage(
-            "铲挖试验页面已就绪，但尚未定义运动轨迹和结束位置；"
-            f"当前参数为{speed:g} mm/s、挖掘深度{depth:g} mm、"
-            f"推土角度{angle:g} deg，本次未发送机械臂指令。",
-            12000,
+        """从当前末端位姿开始，依次执行 B～G 世界坐标增量。"""
+        if not self._can_start_test("铲挖"):
+            return
+        speed, point_deltas = self.window.get_test_params_shovel()
+        speed = float(speed)
+        point_deltas = tuple(
+            tuple(float(value) for value in delta)
+            for delta in point_deltas
         )
+        if not any(
+            abs(value) > 1e-9
+            for delta in point_deltas
+            for value in delta
+        ):
+            self.window.statusBar().showMessage(
+                "B～G点的增量位移均为0，未发送机械臂运动指令", 5000
+            )
+            return
+
+        self._test_data["testShovel"].clear()
+        self.window.reset_wrench_plot()
+        self.window.show_wrench_plot_page()
+        start_pose = tuple(self._latest_pose)
+        self._active_test = {
+            "kind": "testShovel",
+            "started": time.monotonic(),
+            "speed": speed,
+            "point_deltas": point_deltas,
+            "start_pose": start_pose,
+            "start_joints": tuple(self._latest_joints),
+            "base_wrench": self._latest_wrench if self.worker else (0.0,) * 6,
+            "segment_index": -1,
+            "segment_label": "起点",
+            "segment_target_xyz": None,
+            "previous_sample_xyz": start_pose[:3],
+            "travelled_distance": 0.0,
+        }
+        self._sample_active_test()
+        self._sample_timer.start()
+        self._dispatch_next_shovel_segment()
+
+    def _dispatch_next_shovel_segment(self):
+        """在上一段真实到位后，发送下一段增量运动。"""
+        state = self._active_test
+        if not state or state["kind"] != "testShovel":
+            return
+        next_index = state["segment_index"] + 1
+        while next_index < len(state["point_deltas"]):
+            delta = state["point_deltas"][next_index]
+            state["segment_index"] = next_index
+            state["segment_label"] = SHOVEL_POINTS[next_index]
+            length = sum(value * value for value in delta) ** 0.5
+            if length <= 1e-9:
+                next_index += 1
+                continue
+
+            start_xyz = tuple(self._latest_pose[:3])
+            state["segment_start_xyz"] = start_xyz
+            state["segment_target_xyz"] = tuple(
+                start_xyz[index] + delta[index] for index in range(3)
+            )
+            state["segment_length"] = length
+            state["arrival_hits"] = 0
+            state["last_arrival_pose"] = start_xyz
+            self._submit_robot(
+                "world_increment", (*delta, 0.0, 0.0, 0.0), state["speed"]
+            )
+            self.window.statusBar().showMessage(
+                f"铲挖试验：正在前往{state['segment_label']}点，"
+                f"增量({delta[0]:g}, {delta[1]:g}, {delta[2]:g}) mm",
+                8000,
+            )
+            return
+
+        self._sample_active_test()
+        self._finish_active_test("B～G有效增量均执行完成", send_stop=False)
+
+    def _check_shovel_segment_arrival(self):
+        """用实时XYZ与稳定采样判断当前铲挖分段是否到位。"""
+        state = self._active_test
+        if (
+            not state
+            or state["kind"] != "testShovel"
+            or state.get("stop_requested")
+            or state.get("segment_target_xyz") is None
+        ):
+            return
+        xyz = tuple(self._latest_pose[:3])
+        target = state["segment_target_xyz"]
+        error = sum((xyz[i] - target[i]) ** 2 for i in range(3)) ** 0.5
+        previous = state.get("last_arrival_pose", xyz)
+        sample_step = sum((xyz[i] - previous[i]) ** 2 for i in range(3)) ** 0.5
+        state["last_arrival_pose"] = xyz
+        tolerance = min(
+            0.5, max(0.03, float(state["segment_length"]) * 0.01)
+        )
+        # 位移速度最低为1 mm/s，20 Hz下运动中相邻采样约相差0.05 mm；
+        # 采用0.01 mm稳定阈值可避免低速接近目标时提前发送下一段。
+        stable_tolerance = 0.01
+        if error <= tolerance and sample_step <= stable_tolerance:
+            state["arrival_hits"] += 1
+        else:
+            state["arrival_hits"] = 0
+        if state["arrival_hits"] >= SHOVEL_ARRIVAL_CONFIRM_SAMPLES:
+            state["segment_target_xyz"] = None
+            self._dispatch_next_shovel_segment()
 
     def _can_start_test(self, label):
         if self._active_test is not None:
@@ -394,7 +493,7 @@ class AppController:
 
     def _begin_test(self, kind, target, limit, direction=None):
         self._test_data[kind].clear()
-        self.window.reset_plot(0 if kind == "testDisp" else 1)
+        self._reset_test_visual(kind)
         start_pose = tuple(self._latest_pose)
         target_xyz = None
         if direction is not None:
@@ -451,7 +550,7 @@ class AppController:
             # 原始Fz比较，否则存在起始预载荷时会延迟甚至完全不触发停止。
             overloaded = abs(self._latest_wrench[2]) >= state["limit"]
             reason = "达到目标世界坐标" if reached else "达到最大力"
-        else:
+        elif state["kind"] == "testShear":
             step = self._shortest_angle_delta(joints[5], state["previous_j6"])
             state["accumulated_j6"] += step
             state["previous_j6"] = joints[5]
@@ -462,6 +561,32 @@ class AppController:
             reached = progress >= state["target"] - 0.1
             overloaded = abs(self._latest_wrench[5]) >= state["limit"]
             reason = "达到目标角位移" if reached else "达到最大扭矩"
+
+        else:
+            xyz = pose[:3]
+            previous_xyz = state["previous_sample_xyz"]
+            state["travelled_distance"] += sum(
+                (xyz[index] - previous_xyz[index]) ** 2
+                for index in range(3)
+            ) ** 0.5
+            state["previous_sample_xyz"] = xyz
+            relative_xyz = tuple(
+                xyz[index] - state["start_pose"][index]
+                for index in range(3)
+            )
+            self._test_data[state["kind"]].append((
+                round(elapsed_ms, 3), state["segment_label"],
+                *(round(value, 6) for value in relative_xyz),
+                round(state["travelled_distance"], 6),
+                *(round(value, 6) for value in relative_wrench),
+                *pose, *joints,
+            ))
+            if not self.worker:
+                self.window.add_wrench_sample(
+                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                    timestamp=elapsed_ms / 1000.0,
+                )
+            return
 
         self._test_data[state["kind"]].append((
             round(elapsed_ms, 3), round(depth, 6), round(angle, 6),
@@ -490,7 +615,7 @@ class AppController:
         self._sample_timer.stop()
         if clear_on_stop:
             self._test_data[kind].clear()
-            self.window.reset_plot(0 if kind == "testDisp" else 1)
+            self._reset_test_visual(kind)
         label = {
             "testDisp": "贯入",
             "testShear": "剪切",
@@ -506,13 +631,16 @@ class AppController:
             self._finish_active_test("用户重置", send_stop=True)
             return
         self._test_data[kind].clear()
+        self._reset_test_visual(kind)
+        self.window.statusBar().showMessage("试验数据和曲线已清空", 3000)
+
+    def _reset_test_visual(self, kind):
         if kind == "testDisp":
             self.window.reset_plot(0)
         elif kind == "testShear":
             self.window.reset_plot(1)
         else:
             self.window.reset_wrench_plot()
-        self.window.statusBar().showMessage("试验数据和曲线已清空", 3000)
 
     def _save_test_data(self, kind, filepath):
         rows = tuple(self._test_data.get(kind, ()))
@@ -558,11 +686,9 @@ class AppController:
             )
         else:
             headers = (
-                "时间戳/ms", *wrench_headers, *common_headers,
-            )
-            rows = tuple(
-                (row[0], *row[3:9], *row[9:])
-                for row in rows
+                "时间戳/ms", "当前阶段", "相对X位移/mm", "相对Y位移/mm",
+                "相对Z位移/mm", "累计空间位移/mm", *wrench_headers,
+                *common_headers,
             )
         return headers, rows
 
@@ -661,7 +787,7 @@ class AppController:
                 value = abs(self._latest_wrench[2])
                 if value >= state["limit"]:
                     self._finish_active_test("达到最大力", send_stop=True)
-            else:
+            elif state["kind"] == "testShear":
                 value = abs(self._latest_wrench[5])
                 if value >= state["limit"]:
                     self._finish_active_test("达到最大扭矩", send_stop=True)
@@ -719,6 +845,7 @@ class AppController:
     def _update_robot_pose(self, values):
         self._latest_pose = tuple(float(value) for value in values)
         self.window.update_pose(*values)
+        self._check_shovel_segment_arrival()
 
     def _update_robot_joints(self, values):
         self._latest_joints = tuple(float(value) for value in values)

@@ -59,6 +59,7 @@ ICON_PATH = WINDOWS_ICON_PATH if os.path.isfile(WINDOWS_ICON_PATH) else LOGO_PAT
 
 WORLD_AXES = ("X", "Y", "Z", "Rx", "Ry", "Rz")
 JOINT_AXES = ("J1", "J2", "J3", "J4", "J5", "J6")
+SHOVEL_POINTS = ("B", "C", "D", "E", "F", "G")
 TEST_PARAMETER_WIDGETS = (
     "testDispSpeed",
     "testDispDist",
@@ -67,8 +68,10 @@ TEST_PARAMETER_WIDGETS = (
     "testAngDist",
     "testTorqueMax",
     "testShovelSpeed",
-    "testShovelDepth",
-    "testShovelAngle",
+) + tuple(
+    f"testShovel{point}_{axis}"
+    for point in SHOVEL_POINTS
+    for axis in ("X", "Y", "Z")
 )
 
 
@@ -468,7 +471,9 @@ class MainWindow(QMainWindow):
             splitter.setStretchFactor(0, 0)
             splitter.setStretchFactor(1, 1)
             splitter.setStretchFactor(2, 0)
-            splitter.setSizes([550, 1020, 350])
+            # 右栏需要容纳铲挖 B～G 的三轴输入；保持左栏完整显示，
+            # 其余空间仍优先分配给中间曲线区。
+            splitter.setSizes([540, 970, 410])
 
         self._fullscreen_shortcut = QShortcut(QKeySequence("F11"), self)
         self._fullscreen_shortcut.activated.connect(self.toggle_fullscreen)
@@ -713,6 +718,11 @@ class MainWindow(QMainWindow):
             QSettings.Format.IniFormat,
         )
         self._migrate_legacy_registry_settings()
+        for obsolete_name in ("testShovelDepth", "testShovelAngle"):
+            self._memory_settings.remove(
+                self._test_parameter_key(obsolete_name)
+            )
+        self._memory_settings.sync()
         self._load_memory_slots()
         self._last_plot_draw = [0.0, 0.0, 0.0]
         self._plot_draw_interval = 0.10
@@ -981,7 +991,6 @@ class MainWindow(QMainWindow):
             "testDispSaveLabel", "testDispNameLabel", "testAngSpeedLabel",
             "testAngDistLabel", "testTorqueMaxLabel", "testShearSaveLabel",
             "testShearNameLabel", "testShovelSpeedLabel",
-            "testShovelDepthLabel", "testShovelAngleLabel",
             "testShovelSaveLabel",
             "testShovelNameLabel",
         ):
@@ -992,7 +1001,7 @@ class MainWindow(QMainWindow):
         for input_name in (
             "testDispSpeed", "testDispDist", "testForceMax",
             "testAngSpeed", "testAngDist", "testTorqueMax",
-            "testShovelSpeed", "testShovelDepth", "testShovelAngle",
+            "testShovelSpeed",
         ):
             input_widget = self._find_child(input_name)
             if input_widget:
@@ -1001,12 +1010,44 @@ class MainWindow(QMainWindow):
         for unit_name in (
             "testDispSpeedUnit", "testDispDistUnit", "testForceMaxUnit",
             "testAngSpeedUnit", "testAngDistUnit", "testTorqueMaxUnit",
-            "testShovelSpeedUnit", "testShovelDepthUnit",
-            "testShovelAngleUnit",
+            "testShovelSpeedUnit",
         ):
             unit = self._find_child(unit_name)
             if unit:
                 unit.setFixedWidth(48)
+
+        for point in SHOVEL_POINTS:
+            point_label = self._find_child(f"testShovel{point}Label")
+            point_unit = self._find_child(f"testShovel{point}Unit")
+            if point_label:
+                point_label.setFixedWidth(62)
+                point_label.setAlignment(
+                    Qt.AlignmentFlag.AlignRight
+                    | Qt.AlignmentFlag.AlignVCenter
+                )
+            if point_unit:
+                point_unit.setFixedWidth(28)
+                point_unit.setAlignment(
+                    Qt.AlignmentFlag.AlignLeft
+                    | Qt.AlignmentFlag.AlignVCenter
+                )
+            for axis in ("X", "Y", "Z"):
+                axis_label = self._find_child(
+                    f"testShovel{point}_{axis}Label"
+                )
+                value = self._find_child(f"testShovel{point}_{axis}")
+                if axis_label:
+                    axis_label.setFixedWidth(12)
+                    axis_label.setAlignment(Qt.AlignCenter)
+                if value:
+                    value.setFixedWidth(72)
+
+        for button_name in (
+            "testShovelStart", "testShovelSave", "testShovelReset",
+        ):
+            button = self._find_child(button_name)
+            if button:
+                button.setFixedSize(110, 34)
 
         for path_name in (
             "testDispSavePath", "testShearSavePath", "testShovelSavePath",
@@ -1276,13 +1317,13 @@ class MainWindow(QMainWindow):
 
     def get_test_params_shovel(self):
         speed = self._find_child("testShovelSpeed")
-        depth = self._find_child("testShovelDepth")
-        angle = self._find_child("testShovelAngle")
-        return (
-            speed.value() if speed else 10.0,
-            depth.value() if depth else 100.0,
-            angle.value() if angle else 30.0,
-        )
+        points = []
+        for point in SHOVEL_POINTS:
+            points.append(tuple(
+                self._find_child(f"testShovel{point}_{axis}").value()
+                for axis in ("X", "Y", "Z")
+            ))
+        return speed.value() if speed else 10.0, tuple(points)
 
     def add_disp_force(self, displacement, force):
         self._disp_data.append((float(displacement), float(force)))
@@ -1364,6 +1405,19 @@ class MainWindow(QMainWindow):
 
     def set_wrench_plot_visible(self, visible):
         self.canvas3.setVisible(bool(visible))
+
+    def show_wrench_plot_page(self):
+        """切到六维力页面并确保两幅实时曲线可见。"""
+        stack = self._find_child("plotStackedWidget")
+        experiment_button = self._find_child("plotExperimentPageBtn")
+        wrench_button = self._find_child("plotWrenchPageBtn")
+        if stack:
+            stack.setCurrentIndex(1)
+        if experiment_button:
+            experiment_button.setChecked(False)
+        if wrench_button:
+            wrench_button.setChecked(True)
+        self.set_wrench_plot_visible(True)
 
     def reset_wrench_plot(self):
         self._wrench_data.clear()
@@ -1495,7 +1549,7 @@ class MainWindow(QMainWindow):
         return f"test_parameters/{object_name}"
 
     def _load_test_parameters(self):
-        """恢复三种试验的九个输入参数，异常值交由控件范围自动约束。"""
+        """恢复三种试验输入参数，异常值交由控件范围自动约束。"""
         for object_name in TEST_PARAMETER_WIDGETS:
             widget = self._find_child(object_name)
             if widget is None:
