@@ -14,9 +14,10 @@
 
 ## 项目结构与边界
 
-- `apps/sensor_6_control_v3/`：当前六维力/力矩传感器 V3 控制与试验界面。
+- `apps/sensor_6_control_v4/`：当前六维力/力矩传感器 V4 控制与试验界面。
+- `apps/sensor_6_control_v3/`：上一版六维力/力矩传感器界面，保持归档。
 - `apps/sensor_2_control_v2/main.py`：已归档程序入口、机械臂和传感器线程、20 Hz 试验采样、停止条件、XLSX 导出。
-- `apps/sensor_2_control_v2/main_window_2.py` / `main_window_2.ui`：当前正式界面和交互逻辑。
+- `apps/sensor_6_control_v4/main_window_4.py` / `main_window_4.ui`：当前正式界面和交互逻辑。
 - `apps/sensor_2_control_v2/main_window.py` / `main_window.ui`：V2 界面复用的基础窗口、图表和传感器通用功能。
 - `robot_client/`：正式机械臂 JSON 通信和控制实现。
 - `sensor_2/`：已完善的传感器协议，原则上不修改。
@@ -80,4 +81,4 @@ python apps\sensor_2_control_v2\main.py
 
 ## 继续会话的推荐提示词
 
-> 请先完整阅读 `CONVERSATION_HANDOFF.md`、`机械臂通信与速度标定记录.md`、`apps/sensor_2_control_v2/main.py`、`apps/sensor_2_control_v2/main_window_2.py`、`apps/sensor_2_control_v2/main_window_2.ui` 和 `robot_client/`。这是上一台电脑延续的机械臂控制项目。保持 `sensor_2` 不变，`demo` 仅作示例，正式机械臂控制只放在 `robot_client`。先检查 Git 状态和当前程序，再继续我的下一项修改。
+> 请先完整阅读 `CONVERSATION_HANDOFF.md`、`机械臂通信与速度标定记录.md`、`apps/sensor_6_control_v4/README.md`、`apps/sensor_6_control_v4/main.py`、`apps/sensor_6_control_v4/main_window_4.py`、`apps/sensor_6_control_v4/main_window_4.ui`、`robot_client/` 和 `sensor_6/`。这是上一台电脑延续的机械臂控制项目。`demo` 仅作示例，正式机械臂控制只放在 `robot_client`。先检查 Git 状态和当前程序，再继续我的下一项修改。

@@ -269,3 +269,21 @@ Python 源码修改不会自动进入旧 EXE。每次修改下列内容后都需
 `--noconfirm` 可能在删除旧目录时报 `WinError 5`。此时先输出到新的临时
 `distpath`，再用 PowerShell 将完整 EXE 和 `_internal` 覆盖到正式目录；
 覆盖前后都应备份并恢复 `sensor_6_control_v3.ini`。
+
+## 10. 2026-09-11 V4 构建
+
+V4 使用以下命令独立发布，不覆盖 V3：
+
+```powershell
+& "C:\Users\www61\anaconda3\envs\common\python.exe" -m PyInstaller `
+  --clean `
+  --noconfirm `
+  --distpath "release" `
+  --workpath "$env:TEMP\pyinstaller_sensor_6_control_v4_work" `
+  "apps\sensor_6_control_v4\sensor_6_control_v4.spec"
+```
+
+生成目录为 `release/sensor_6_control_v4/`。发布时整体复制该文件夹；
+V4 的位置记忆和试验参数保存在 EXE 同级的
+`sensor_6_control_v4.ini`。当前 EXE 的 SHA256 为
+`D4C487C0F71FEA6DFB878F8652C7FCD830053E01A74BCB0FE847B19EFDB5DABC`。
