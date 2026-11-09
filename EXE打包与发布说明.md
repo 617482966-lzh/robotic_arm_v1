@@ -285,5 +285,25 @@ V4 使用以下命令独立发布，不覆盖 V3：
 
 生成目录为 `release/sensor_6_control_v4/`。发布时整体复制该文件夹；
 V4 的位置记忆和试验参数保存在 EXE 同级的
-`sensor_6_control_v4.ini`。当前 EXE 的 SHA256 为
+`sensor_6_control_v4.ini`。当时构建的 EXE SHA256 为
 `D4C487C0F71FEA6DFB878F8652C7FCD830053E01A74BCB0FE847B19EFDB5DABC`。
+
+## 11. 2026-10-29 V4 增量限制、力保护和绘图优化构建
+
+本次已重新生成并更新 `release/sensor_6_control_v4/`，包含 XYZ 手动
+增量 ±100 mm、默认开启的 200 N 急停保护和六维曲线局部重绘。
+
+- EXE：8,997,255 字节；完整发布目录约 185 MiB；
+- SHA256：`3435031ABFC3FD4603C44CA971C94BD5C00AB9C93234B411E3574A27FB6A0E26`；
+- 24 项无硬件回归检查通过；真实 EXE 已验证初始化完成标记和持续运行；
+- 发布 UI 与源码逐字节一致，归档包含 `ForceProtection` 和 `wrench_plot`；
+- 复制到其他电脑仍需要整个发布目录；本次保留原有 V4 INI。
+
+命令仍使用第 10 节的 V4 `.spec`。为避免共享环境中的可选库扩大体积，
+配置排除 Torch、SciPy、Pandas 等应用未使用的依赖。
+
+当前构建环境的 Poppler 路径会被 DLL 扫描误选，带入 ICU78 的
+`icuuc.dll`、`icudt78.dll`；其接口后缀与 Qt 所需的 Windows ICU 接口
+不同，会导致 `QtWidgets` 导入报“找不到指定的程序”。`.spec` 在依赖
+分析后过滤这类冲突文件，让 Windows 提供其系统 ICU；不应手动把
+Poppler 的 ICU 或其他电脑的系统 ICU 复制进发布目录。

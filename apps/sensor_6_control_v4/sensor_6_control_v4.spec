@@ -41,10 +41,28 @@ analysis = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    # Matplotlib/OpenPyXL inspect several optional libraries. They are not used
+    # by this NumPy + QtAgg + XLSX app, even when installed in the build env.
+    excludes=[
+        "torch", "torchvision", "torchaudio", "scipy", "pandas",
+        "numba", "sympy", "IPython", "notebook", "pytest",
+    ],
     noarchive=False,
     optimize=0,
 )
+
+# This Qt build imports the unversioned ICU API supplied by Windows. A Poppler
+# directory on the build machine's PATH can otherwise inject ICU78 (whose
+# exports end in _78), causing QtWidgets to fail at startup with WinError 127.
+# Keep OS ICU resolution intact rather than copying a system DLL into the app.
+analysis.binaries = [
+    entry for entry in analysis.binaries
+    if Path(entry[0]).name.lower() != "icuuc.dll"
+    and not (
+        Path(entry[0]).name.lower().startswith("icudt")
+        and Path(entry[0]).name.lower().endswith(".dll")
+    )
+]
 
 pyz = PYZ(analysis.pure)
 

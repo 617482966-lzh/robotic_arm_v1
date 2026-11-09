@@ -354,10 +354,10 @@
                <number>3</number>
               </property>
               <property name="minimum">
-               <double>-999.999000000000024</double>
+               <double>-100.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>999.999000000000024</double>
+               <double>100.000000000000000</double>
               </property>
               <property name="value">
                <double>0.000000000000000</double>
@@ -409,10 +409,10 @@
                <number>3</number>
               </property>
               <property name="minimum">
-               <double>-999.999000000000024</double>
+               <double>-100.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>999.999000000000024</double>
+               <double>100.000000000000000</double>
               </property>
               <property name="value">
                <double>0.000000000000000</double>
@@ -464,10 +464,10 @@
                <number>3</number>
               </property>
               <property name="minimum">
-               <double>-999.999000000000024</double>
+               <double>-100.000000000000000</double>
               </property>
               <property name="maximum">
-               <double>999.999000000000024</double>
+               <double>100.000000000000000</double>
               </property>
               <property name="value">
                <double>0.000000000000000</double>
@@ -2978,6 +2978,15 @@
               </widget>
              </item>
             </layout>
+           </item>
+           <item>
+            <widget class="QPushButton" name="sensorForceProtectionBtn">
+             <property name="minimumSize"><size><width>0</width><height>32</height></size></property>
+             <property name="toolTip"><string>默认开启。传感器连接后，Fx、Fy、Fz 任一原始读数的绝对值大于 200 N 时立即提交机械臂急停。</string></property>
+             <property name="text"><string>200 N 急停保护：开启</string></property>
+             <property name="checkable"><bool>true</bool></property>
+             <property name="checked"><bool>true</bool></property>
+            </widget>
            </item>
           </layout>
          </widget>

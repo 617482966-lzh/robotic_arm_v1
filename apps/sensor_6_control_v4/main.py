@@ -2,6 +2,7 @@
 """机械臂控制与六维力传感数据采集 V4 主程序。"""
 
 import itertools
+import math
 import os
 import queue
 import subprocess
@@ -29,7 +30,7 @@ import serial.tools.list_ports
 from openpyxl import Workbook
 
 from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import Qt, QThread, QTimer, Signal
+from PySide6.QtCore import QObject, QSignalBlocker, Qt, QThread, QTimer, Signal
 
 from main_window_4 import MainWindow, SHOVEL_POINTS
 
@@ -44,6 +45,75 @@ GUI_READY_TIMEOUT_SECONDS = 10.0
 GUI_CHILD_ENV = "ROBOTIC_ARM_GUI_CHILD"
 GUI_READY_FILE_ENV = "ROBOTIC_ARM_GUI_READY_FILE"
 WINDOWS_APP_USER_MODEL_ID = "JLU.RoboticArm.ControlSystem.V4"
+FORCE_LIMIT_N = 200.0
+MANUAL_TRANSLATION_LIMIT_MM = 100.0
+MOTION_COMMANDS = frozenset({
+    "world_increment", "world_absolute", "tool_vector_line", "move_along_tool_x",
+    "joint_increment", "joint_absolute", "home", "enable",
+})
+
+
+class ForceProtection(QObject):
+    """采集线程直接检查绝对力并提交急停，GUI 只负责通知和恢复操作。"""
+
+    tripped = Signal(str, float)
+
+    def __init__(self, stop_callback, enabled=True):
+        super().__init__()
+        self._lock = threading.RLock()
+        self._enabled = bool(enabled)
+        self._connected = False
+        self._latched = False
+        self._latest = None
+        self._stop_callback = stop_callback
+
+    def _overload(self):
+        if self._enabled and self._connected and self._latest is not None:
+            for axis, value in zip(("Fx", "Fy", "Fz"), self._latest):
+                if abs(value) > FORCE_LIMIT_N:
+                    return axis, value
+        return None
+
+    def _check(self):
+        overload = self._overload()
+        if overload is not None and not self._latched:
+            self._latched = True
+            # 在当前采集线程同步提交最高优先级急停，不等待 Qt 事件循环。
+            self._stop_callback(*overload)
+            self.tripped.emit(*overload)
+
+    def observe(self, values):
+        forces = tuple(float(value) for value in values[:3])
+        if len(forces) != 3 or not all(math.isfinite(value) for value in forces):
+            return
+        with self._lock:
+            self._latest = forces
+            self._check()
+
+    def set_connected(self, connected):
+        with self._lock:
+            self._connected = bool(connected)
+            if not connected:
+                self._latest = None
+
+    def set_enabled(self, enabled):
+        with self._lock:
+            self._enabled = bool(enabled)
+            if not enabled:
+                self._latched = False
+            self._check()
+
+    def motion_blocked(self):
+        with self._lock:
+            return self._enabled and self._latched
+
+    def rearm_for_enable(self):
+        """解除载荷后需要用户再次点击使能；不会因力值波动自动恢复运动。"""
+        with self._lock:
+            if self._overload() is not None:
+                return False
+            self._latched = False
+            return True
 
 
 def configure_windows_app_identity():
@@ -81,9 +151,10 @@ class SensorWorker(QThread):
     data_ready = Signal(float, float, float, float, float, float)
     error_occurred = Signal(str)
 
-    def __init__(self, controller, parent=None):
+    def __init__(self, controller, parent=None, force_protection=None):
         super().__init__(parent)
         self.controller = controller
+        self.force_protection = force_protection
         self._stop_event = threading.Event()
         self._last_error = None
         self._last_error_at = 0.0
@@ -94,6 +165,8 @@ class SensorWorker(QThread):
             try:
                 values = self.controller.monitor_6_sensor()
                 if all(value is not None for value in values):
+                    if self.force_protection is not None:
+                        self.force_protection.observe(values)
                     self.data_ready.emit(*values)
                 else:
                     error = getattr(self.controller, "last_error", None)
@@ -136,7 +209,7 @@ class RobotWorker(QThread):
     command_done = Signal(str)
     error_occurred = Signal(str)
 
-    def __init__(self, host, port, poll_interval=0.05):
+    def __init__(self, host, port, poll_interval=0.05, force_protection=None):
         super().__init__()
         self.host = host
         self.port = int(port)
@@ -145,24 +218,41 @@ class RobotWorker(QThread):
         self._stop_event = threading.Event()
         self._commands = queue.PriorityQueue()
         self._sequence = itertools.count()
+        self.force_protection = force_protection
+        self._command_lock = threading.Lock()
+        self._emergency_pending = threading.Event()
 
     def submit(self, command, *args, urgent=False):
-        if urgent and command in {"stop", "safe_stop", "disconnect"}:
-            while True:
-                try:
-                    self._commands.get_nowait()
-                except queue.Empty:
-                    break
-        priority = 0 if urgent else 10
-        self._commands.put((priority, next(self._sequence), command, args))
+        if command in MOTION_COMMANDS and self.force_protection is not None:
+            if self.force_protection.motion_blocked():
+                return False
+        with self._command_lock:
+            # 试验停止或重复点击不能把已经排队的急停替换掉。
+            if self._emergency_pending.is_set() and command == "safe_stop":
+                return False
+            preserve_emergency = command == "disconnect" and self._emergency_pending.is_set()
+            if urgent and command in {"stop", "safe_stop", "disconnect"} and not preserve_emergency:
+                while True:
+                    try:
+                        self._commands.get_nowait()
+                    except queue.Empty:
+                        break
+            if command == "stop":
+                self._emergency_pending.set()
+            priority = -100 if command == "stop" else (0 if urgent else 10)
+            self._commands.put((priority, next(self._sequence), command, args))
+        return True
 
     def stop(self, wait=False):
-        self._stop_event.set()
         self.submit("disconnect", urgent=True)
+        self._stop_event.set()
         if wait and QThread.currentThread() is not self:
             self.wait(3000)
 
     def _execute(self, command, args):
+        if command in MOTION_COMMANDS and self.force_protection is not None:
+            if self.force_protection.motion_blocked():
+                raise RuntimeError("200 N 力保护已触发，请卸载后重新使能")
         actions = {
             "world_increment": self.robot.move_world_increment,
             "world_absolute": self.robot.move_world_absolute,
@@ -182,7 +272,17 @@ class RobotWorker(QThread):
         action = actions.get(command)
         if action is None:
             raise ValueError(f"未知机械臂命令: {command}")
-        result = action(*args)
+        try:
+            result = action(*args)
+        finally:
+            if command == "stop":
+                with self._command_lock:
+                    with self._commands.mutex:
+                        another_stop_pending = any(
+                            item[2] == "stop" for item in self._commands.queue
+                        )
+                    if not another_stop_pending:
+                        self._emergency_pending.clear()
         if result is None or result is False:
             raise RuntimeError(f"机械臂未确认命令: {command}")
         self.command_done.emit(command)
@@ -205,6 +305,9 @@ class RobotWorker(QThread):
                     command_executed = True
                 except queue.Empty:
                     pass
+                if self._emergency_pending.is_set():
+                    # 有急停待发送时先处理命令，不能插入一次实时位姿查询。
+                    continue
                 now = time.monotonic()
                 if now >= next_poll:
                     pose, joints = self.robot.read_realtime_state()
@@ -219,6 +322,19 @@ class RobotWorker(QThread):
                 self.error_occurred.emit(str(exc))
         finally:
             if self.robot:
+                if self._emergency_pending.is_set():
+                    # 用户断开或关闭窗口时也必须先发出已经请求的急停，
+                    # 不能只断开 TCP 让控制器继续执行旧运动。
+                    with self._command_lock:
+                        while True:
+                            try:
+                                self._commands.get_nowait()
+                            except queue.Empty:
+                                break
+                    try:
+                        self._execute("stop", ())
+                    except Exception as exc:
+                        self.error_occurred.emit(f"断开前急停失败: {exc}")
                 self.robot.disconnect()
             self.robot = None
             self.disconnected.emit()
@@ -257,9 +373,10 @@ class XlsxExportWorker(QThread):
                 workbook.close()
 
 
-class AppController:
+class AppController(QObject):
 
     def __init__(self):
+        super().__init__()
         configure_windows_app_identity()
         self.app = QApplication(sys.argv)
         self.app.setAttribute(Qt.AA_Use96Dpi)
@@ -280,6 +397,13 @@ class AppController:
             "testShovel": [],
         }
         self._export_workers = set()
+        self._force_protection = ForceProtection(
+            self._request_force_emergency_stop,
+            enabled=self.window.is_force_protection_enabled(),
+        )
+        self._force_protection.tripped.connect(
+            self._on_force_protection_trip, Qt.ConnectionType.QueuedConnection
+        )
 
         self._sample_timer = QTimer(self.window)
         self._sample_timer.setInterval(SAMPLE_INTERVAL_MS)
@@ -306,15 +430,14 @@ class AppController:
         self.window.sensor_connect_requested.connect(self._on_sensor_connect)
         self.window.sensor_disconnect_requested.connect(self._on_sensor_disconnect)
         self.window.sensor_refresh_requested.connect(self._on_sensor_refresh)
+        self.window.force_protection_toggled.connect(self._on_force_protection_toggled)
 
         self.window.zero_all_requested.connect(self._on_zero_all)
         self.window.sensor_zero_channel_requested.connect(self._on_zero_channel)
 
         self.window.robot_connect_requested.connect(self._on_robot_connect)
         self.window.robot_disconnect_requested.connect(self._on_robot_disconnect)
-        self.window.world_increment_requested.connect(
-            lambda request: self._submit_robot("world_increment", request.pose, request.speed_mm_s)
-        )
+        self.window.world_increment_requested.connect(self._on_world_increment)
         self.window.world_absolute_requested.connect(
             lambda request: self._submit_robot("world_absolute", request.pose, request.speed_mm_s)
         )
@@ -483,6 +606,9 @@ class AppController:
             self._dispatch_next_shovel_segment()
 
     def _can_start_test(self, label):
+        if self._force_protection.motion_blocked():
+            self.window.statusBar().showMessage("200 N 力保护已触发，请卸载后重新使能", 8000)
+            return False
         if self._active_test is not None:
             self.window.statusBar().showMessage("已有试验正在运行，请先等待或停止", 5000)
             return False
@@ -607,6 +733,9 @@ class AppController:
         if self._active_test is None:
             return
         if send_stop:
+            if self._force_protection.motion_blocked():
+                # 采集线程已经提交急停，试验的普通暂停不能覆盖它。
+                return
             if self._active_test.get("stop_requested"):
                 return
             self._active_test["stop_requested"] = True
@@ -628,9 +757,7 @@ class AppController:
             "testShear": "剪切",
             "testShovel": "铲挖",
         }.get(kind, "试验")
-        self.window.statusBar().showMessage(
-            f"{label}试验结束：{reason}；机械臂保持使能", 12000
-        )
+        self.window.statusBar().showMessage(f"{label}试验结束：{reason}", 12000)
 
     def _reset_test_data(self, kind):
         if self._active_test and self._active_test["kind"] == kind:
@@ -732,7 +859,11 @@ class AppController:
                     f"请检查供电、A/B接线和转换器，详细信息: {detail}"
                 )
 
-            self.worker = SensorWorker(self.sensor_ctrl)
+            self._force_protection.set_connected(True)
+            self._force_protection.observe(initial_data)
+            self.worker = SensorWorker(
+                self.sensor_ctrl, force_protection=self._force_protection
+            )
             self.worker.data_ready.connect(self._on_data_ready)
             self.worker.error_occurred.connect(self._on_worker_error)
             self.worker.start()
@@ -742,6 +873,7 @@ class AppController:
             self.window._set_sensor_connected(True)
             self.window.statusBar().showMessage(f"传感器已连接: {actual_port}", 5000)
         except Exception as e:
+            self._force_protection.set_connected(False)
             if self.sensor_comm:
                 try:
                     self.sensor_comm.close()
@@ -758,6 +890,7 @@ class AppController:
             )
 
     def _on_sensor_disconnect(self):
+        self._force_protection.set_connected(False)
         try:
             if self.worker:
                 sensor_worker = self.worker
@@ -786,6 +919,8 @@ class AppController:
         )
         self.window.update_force_torque(*self._latest_wrench)
         self.window.add_wrench_sample(*self._latest_wrench)
+        if self._force_protection.motion_blocked():
+            return
         # 直接在20 Hz传感器数据到达时检查阈值，避免再等待GUI采样定时器，
         # 最坏可减少约50 ms的停止判定延迟。
         state = self._active_test
@@ -805,6 +940,33 @@ class AppController:
 
     def _on_worker_error(self, msg):
         self.window.statusBar().showMessage(f"传感器错误: {msg}", 5000)
+
+    def _request_force_emergency_stop(self, _axis, _value):
+        """此方法可在采集线程运行；只访问线程安全命令队列，不操作 QWidget。"""
+        worker = self.robot_worker
+        if worker is not None:
+            worker.submit("stop", urgent=True)
+
+    def _on_force_protection_trip(self, axis, value):
+        if self._active_test is not None:
+            self._finish_active_test("200 N 力保护触发急停", send_stop=False)
+        button = self.window._find_child("robotBtnEnable")
+        if button is not None:
+            blocker = QSignalBlocker(button)
+            self.window.set_robot_enabled(False)
+            del blocker
+        self.window.set_motion_controls_enabled(False)
+        self.window.statusBar().showMessage(
+            f"200 N 力保护急停：{axis}={value:.2f} N；请卸载后重新使能", 30000
+        )
+
+    def _on_force_protection_toggled(self, enabled):
+        self._force_protection.set_enabled(enabled)
+        if not enabled:
+            self.window.set_motion_controls_enabled(self.robot_worker is not None)
+        self.window.statusBar().showMessage(
+            "200 N 力保护已开启" if enabled else "200 N 力保护已关闭", 5000
+        )
 
     def _on_sensor_refresh(self):
         ports = list(serial.tools.list_ports.comports())
@@ -843,7 +1005,7 @@ class AppController:
             self.window.statusBar().showMessage("机械臂正在连接或已经连接", 3000)
             return
         self.window.statusBar().showMessage(f"正在连接机械臂: {ip}:{port}", 5000)
-        worker = RobotWorker(ip, port)
+        worker = RobotWorker(ip, port, force_protection=self._force_protection)
         self.robot_worker = worker
         worker.connected.connect(self._on_robot_connected)
         worker.disconnected.connect(self._on_robot_worker_disconnected)
@@ -864,7 +1026,9 @@ class AppController:
 
     def _on_robot_connected(self, ip, port):
         self.window._set_robot_connected(True)
-        self.window.set_motion_controls_enabled(True)
+        self.window.set_motion_controls_enabled(not self._force_protection.motion_blocked())
+        if self._force_protection.motion_blocked():
+            self.robot_worker.submit("stop", urgent=True)
         self.window.statusBar().showMessage(f"机械臂已连接: {ip}:{port}", 5000)
 
     def _on_robot_disconnect(self):
@@ -888,7 +1052,17 @@ class AppController:
         if not self.robot_worker:
             self.window.statusBar().showMessage("请先连接机械臂", 3000)
             return
+        if command in MOTION_COMMANDS and self._force_protection.motion_blocked():
+            self.window.statusBar().showMessage("200 N 力保护已触发，请卸载后重新使能", 8000)
+            return
         self.robot_worker.submit(command, *args, urgent=urgent)
+
+    def _on_world_increment(self, request):
+        xyz = tuple(float(value) for value in request.pose[:3])
+        if any(not math.isfinite(value) or abs(value) > MANUAL_TRANSLATION_LIMIT_MM for value in xyz):
+            self.window.statusBar().showMessage("末端增量 X、Y、Z 每轴必须在 -100～100 mm 内", 5000)
+            return
+        self._submit_robot("world_increment", request.pose, request.speed_mm_s)
 
     def _on_robot_home(self):
         self._submit_robot("home", 10.0)
@@ -900,6 +1074,16 @@ class AppController:
             self._submit_robot("stop", urgent=True)
 
     def _on_robot_enable(self, state):
+        if state and not self._force_protection.rearm_for_enable():
+            button = self.window._find_child("robotBtnEnable")
+            if button is not None:
+                blocker = QSignalBlocker(button)
+                self.window.set_robot_enabled(False)
+                del blocker
+            self.window.statusBar().showMessage("当前力仍超过 200 N，无法使能", 8000)
+            return
+        if state:
+            self.window.set_motion_controls_enabled(self.robot_worker is not None)
         self._submit_robot("enable" if state else "disable")
 
     def _on_robot_command_done(self, command):

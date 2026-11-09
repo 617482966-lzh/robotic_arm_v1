@@ -13,10 +13,11 @@ import math
 import os
 import sys
 import time
+from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
 
-from PySide6.QtCore import QSettings, QStandardPaths, Qt, Signal, Slot
+from PySide6.QtCore import QSettings, QStandardPaths, Qt, QTimer, Signal, Slot
 from PySide6.QtGui import QIcon, QKeySequence, QPixmap, QShortcut
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QApplication, QFileDialog, QMainWindow, QWidget
@@ -26,6 +27,8 @@ import matplotlib
 matplotlib.use("QtAgg")
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+
+from wrench_plot import WrenchPlotRenderer
 
 matplotlib.rcParams["font.sans-serif"] = [
     "Microsoft YaHei",
@@ -59,6 +62,9 @@ ICON_PATH = WINDOWS_ICON_PATH if os.path.isfile(WINDOWS_ICON_PATH) else LOGO_PAT
 
 WORLD_AXES = ("X", "Y", "Z", "Rx", "Ry", "Rz")
 JOINT_AXES = ("J1", "J2", "J3", "J4", "J5", "J6")
+MAX_WORLD_INCREMENT_MM = 100.0
+WRENCH_HISTORY_SAMPLES = 5000
+WRENCH_RENDER_INTERVAL_MS = 100
 SHOVEL_POINTS = ("B", "C", "D", "E", "F", "G")
 TEST_PARAMETER_WIDGETS = (
     "testDispSpeed",
@@ -188,6 +194,8 @@ QPushButton#sensorRefreshBtn {
     max-height: 24px;
     padding: 2px 8px;
 }
+QPushButton#sensorForceProtectionBtn { background-color: #514523; border-color: #b68c28; color: #ffe8ab; font-weight: bold; }
+QPushButton#sensorForceProtectionBtn:checked { background-color: #1a5a3c; border-color: #28a745; color: #dbffe9; }
 QPushButton#robotBtnPTP_zengliang,
 QPushButton#robotJointBtnPTP_zengliang {
     background-color: #145c63;
@@ -292,6 +300,8 @@ QPushButton#testShovelStart { background-color: #7557a8; border-color: #60438f; 
 QPushButton#appExitBtn { background-color: #b64242; border-color: #962f2f; color: white; font-weight: bold; }
 QPushButton#themeToggleBtn { background-color: #526579; border-color: #3e5062; color: white; font-weight: bold; }
 QPushButton#robotBtnConnect, QPushButton#sensorBtnConnect, QPushButton#sensorRefreshBtn { min-height: 24px; max-height: 24px; padding: 2px 8px; }
+QPushButton#sensorForceProtectionBtn { background-color: #fff0c9; border-color: #b68c28; color: #6b4700; font-weight: bold; }
+QPushButton#sensorForceProtectionBtn:checked { background-color: #218c4e; border-color: #18723e; color: white; }
 QPushButton#robotBtnReset_zengliang, QPushButton#robotBtnReset_global,
 QPushButton#robotJointBtnReset_zengliang, QPushButton#robotJointBtnReset_global,
 QPushButton#testDispReset, QPushButton#testShearReset, QPushButton#testShovelReset { background-color: #e0b51b; border-color: #b38c00; color: #302600; font-weight: bold; }
@@ -323,6 +333,7 @@ class MainWindow(QMainWindow):
     home_requested = Signal()
     zero_all_requested = Signal()
     sensor_zero_channel_requested = Signal(int)
+    force_protection_toggled = Signal(bool)
     disp_test_start = Signal()
     shear_test_start = Signal()
     shovel_test_start = Signal()
@@ -472,10 +483,17 @@ class MainWindow(QMainWindow):
             )
         self.figure3.tight_layout(pad=2.0)
         self.canvas3 = install_canvas(self.figure3, "plotPlaceholder3")
+        self._wrench_renderer = WrenchPlotRenderer(
+            self.canvas3, self.ax3_force, self.ax3_torque, self.wrench_lines
+        )
+        self._wrench_plot_timer = QTimer(self)
+        self._wrench_plot_timer.setInterval(WRENCH_RENDER_INTERVAL_MS)
+        self._wrench_plot_timer.timeout.connect(self._refresh_wrench_plot)
 
         self._disp_data = []
         self._ang_data = []
-        self._wrench_data = []
+        self._wrench_data = deque(maxlen=WRENCH_HISTORY_SAMPLES)
+        self._wrench_plot_dirty = False
         self._wrench_time_origin = time.monotonic()
 
     def _setup_ui_from_file(self):
@@ -538,6 +556,7 @@ class MainWindow(QMainWindow):
     def _apply_plot_theme(self):
         if not hasattr(self, "ax1"):
             return
+        self._wrench_renderer.invalidate()
         colors = (
             {
                 "figure": "#1c1c2e", "axes": "#12122a", "text": "#c8ccd4",
@@ -612,6 +631,9 @@ class MainWindow(QMainWindow):
         zero_all = self._find_child("sensorBtnZeroAll")
         if zero_all:
             zero_all.clicked.connect(self.zero_all_requested.emit)
+        force_protection = self._find_child("sensorForceProtectionBtn")
+        if force_protection:
+            force_protection.toggled.connect(self._on_force_protection_toggled)
         for channel, axis in enumerate(("Fx", "Fy", "Fz", "Tx", "Ty", "Tz"), 1):
             button = self._find_child(f"sensorBtnZero{axis}")
             if button:
@@ -665,6 +687,9 @@ class MainWindow(QMainWindow):
         self._bind_stacked_navigation(
             "plotStackedWidget",
             ("plotExperimentPageBtn", "plotWrenchPageBtn"),
+        )
+        self._find_child("plotStackedWidget").currentChanged.connect(
+            self._on_plot_page_changed
         )
         self._bind_stacked_navigation(
             "testStackedWidget",
@@ -799,6 +824,10 @@ class MainWindow(QMainWindow):
         self._load_test_parameters()
         self._bind_test_parameter_memory()
         self._configure_control_geometry()
+        for axis in WORLD_AXES[:3]:
+            spin = self._find_child(f"robotTarget{axis}_zengliang")
+            spin.setRange(-MAX_WORLD_INCREMENT_MM, MAX_WORLD_INCREMENT_MM)
+            spin.setToolTip(f"{axis} 单次增量范围：-100～100 mm")
         self._set_robot_connected(False)
         self._set_sensor_connected(False)
         self.update_pose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
@@ -1228,6 +1257,8 @@ class MainWindow(QMainWindow):
             "robotTarget{axis}_zengliang",
             WORLD_AXES,
         )
+        if any(abs(value) > MAX_WORLD_INCREMENT_MM for value in values[:3]):
+            raise ValueError("末端增量 X、Y、Z 每轴均须在 -100～100 mm 内")
         speed = float(self._find_child("robotSpeedSpin_zengliang").value())
         return CartesianMoveRequest(*values, speed)
 
@@ -1257,7 +1288,11 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _emit_world_increment(self):
-        request = self.get_world_increment_request()
+        try:
+            request = self.get_world_increment_request()
+        except ValueError as exc:
+            self.statusBar().showMessage(str(exc), 5000)
+            return
         self.world_increment_requested.emit(request)
         self.statusBar().showMessage("末端增量运动请求已提交", 2500)
 
@@ -1325,6 +1360,16 @@ class MainWindow(QMainWindow):
     def _on_sensor_disconnect(self):
         self.sensor_disconnect_requested.emit()
         self._set_sensor_connected(False)
+
+    def is_force_protection_enabled(self):
+        button = self._find_child("sensorForceProtectionBtn")
+        return bool(button is not None and button.isChecked())
+
+    def _on_force_protection_toggled(self, enabled):
+        button = self._find_child("sensorForceProtectionBtn")
+        if button:
+            button.setText("200 N 急停保护：开启" if enabled else "200 N 急停保护：关闭")
+        self.force_protection_toggled.emit(bool(enabled))
 
     def _on_test_browse(self, prefix):
         path_edit = self._find_child(f"{prefix}SavePath")
@@ -1510,36 +1555,31 @@ class MainWindow(QMainWindow):
                 float(tz),
             )
         )
-        if len(self._wrench_data) > 5000:
-            self._wrench_data = self._wrench_data[-5000:]
-        self._refresh_wrench_plot()
+        # 采样只进行 O(1) 入队；坐标和绘图由可见页面的定时器批量刷新。
+        self._wrench_plot_dirty = True
 
     def _refresh_wrench_plot(self, force=False):
-        now = time.monotonic()
-        if (
-            not force
-            and now - self._last_plot_draw[2] < self._plot_draw_interval
-        ):
+        if not self.canvas3.isVisible():
             return
-        self._last_plot_draw[2] = now
-        if self._wrench_data:
-            columns = tuple(zip(*self._wrench_data))
-            times = columns[0]
-            for index, name in enumerate(
-                ("Fx", "Fy", "Fz", "Tx", "Ty", "Tz"),
-                1,
-            ):
-                self.wrench_lines[name].set_data(times, columns[index])
+        if not force and not self._wrench_plot_dirty:
+            return
+        if self._wrench_renderer.update(self._wrench_data, force=force):
+            self._wrench_plot_dirty = False
+
+    def _on_plot_page_changed(self, index):
+        if index == 1 and self.canvas3.isVisible():
+            self._wrench_plot_timer.start()
+            QTimer.singleShot(0, lambda: self._refresh_wrench_plot(force=True))
         else:
-            for line in self.wrench_lines.values():
-                line.set_data([], [])
-        for axes in (self.ax3_force, self.ax3_torque):
-            axes.relim()
-            axes.autoscale_view()
-        if self.canvas3.isVisible():
-            self.canvas3.draw_idle()
+            self._wrench_plot_timer.stop()
+            if index == 0 and hasattr(self, "_last_plot_draw"):
+                self._refresh_plot(0, force=True)
+                self._refresh_plot(1, force=True)
 
     def _refresh_plot(self, ax_index, force=False):
+        canvas = self.canvas1 if ax_index == 0 else self.canvas2
+        if not canvas.isVisible():
+            return
         now = time.monotonic()
         if (
             not force
@@ -1551,7 +1591,6 @@ class MainWindow(QMainWindow):
         data = self._disp_data if ax_index == 0 else self._ang_data
         line = self.line1 if ax_index == 0 else self.line2
         axes = self.ax1 if ax_index == 0 else self.ax2
-        canvas = self.canvas1 if ax_index == 0 else self.canvas2
         if data:
             x_values, y_values = zip(*data)
         else:
@@ -1564,6 +1603,11 @@ class MainWindow(QMainWindow):
 
     def set_wrench_plot_visible(self, visible):
         self.canvas3.setVisible(bool(visible))
+        if visible and self.canvas3.isVisible():
+            self._wrench_plot_timer.start()
+            self._refresh_wrench_plot(force=True)
+        else:
+            self._wrench_plot_timer.stop()
 
     def show_wrench_plot_page(self):
         """切到六维力页面并确保两幅实时曲线可见。"""
@@ -1581,6 +1625,7 @@ class MainWindow(QMainWindow):
     def reset_wrench_plot(self):
         self._wrench_data.clear()
         self._wrench_time_origin = time.monotonic()
+        self._wrench_plot_dirty = True
         self._refresh_wrench_plot(force=True)
 
     def get_memory_coordinate_type(self):
@@ -1755,6 +1800,7 @@ class MainWindow(QMainWindow):
         self._memory_settings.sync()
 
     def closeEvent(self, event):
+        self._wrench_plot_timer.stop()
         self._save_test_parameters()
         self._save_memory_slots()
         super().closeEvent(event)
@@ -1778,6 +1824,8 @@ class MainWindow(QMainWindow):
     def set_plot_visible(self, ax_index, visible):
         canvas = self.canvas1 if ax_index == 0 else self.canvas2
         canvas.setVisible(bool(visible))
+        if visible:
+            self._refresh_plot(ax_index, force=True)
 
     def reset_plot(self, ax_index):
         if ax_index == 0:
